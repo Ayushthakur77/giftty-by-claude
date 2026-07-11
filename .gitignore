@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.output/
+.vercel/
+.netlify/
+
+# Environment — NEVER commit real secrets. This is correct from commit #1,
+# unlike v1 where .env was committed because this line was missing.
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Editor/OS
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+*.log
+
+# Supabase local dev
+supabase/.branches
+supabase/.temp
