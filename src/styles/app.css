@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Playfair+Display:wght@600;700&display=swap');
+
+:root {
+  --color-maroon: #7A1F2B;
+  --color-gold: #D4AF37;
+  --color-cream: #F5EDE4;
+}
+
+html.dark {
+  color-scheme: dark;
+}
