@@ -18,6 +18,7 @@ import { Route as GiftBoxRouteImport } from './routes/gift-box'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as AiFinderRouteImport } from './routes/ai-finder'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
@@ -29,6 +30,11 @@ import { Route as BoxSlugRouteImport } from './routes/box.$slug'
 import { Route as AuthSignUpRouteImport } from './routes/auth.sign-up'
 import { Route as AuthSignInRouteImport } from './routes/auth.sign-in'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
+import { Route as AdminReadyBoxesRouteImport } from './routes/admin.ready-boxes'
+import { Route as AdminProductsRouteImport } from './routes/admin.products'
+import { Route as AdminEmptyBoxesRouteImport } from './routes/admin.empty-boxes'
+import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
+import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 
 const WishlistRoute = WishlistRouteImport.update({
   id: '/wishlist',
@@ -73,6 +79,11 @@ const CartRoute = CartRouteImport.update({
 const AiFinderRoute = AiFinderRouteImport.update({
   id: '/ai-finder',
   path: '/ai-finder',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccountRoute = AccountRouteImport.update({
@@ -130,11 +141,37 @@ const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
   path: '/auth/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminReadyBoxesRoute = AdminReadyBoxesRouteImport.update({
+  id: '/ready-boxes',
+  path: '/ready-boxes',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminProductsRoute = AdminProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminEmptyBoxesRoute = AdminEmptyBoxesRouteImport.update({
+  id: '/empty-boxes',
+  path: '/empty-boxes',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDashboardRoute = AdminDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
+  '/admin': typeof AdminRouteWithChildren
   '/ai-finder': typeof AiFinderRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
@@ -144,6 +181,11 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof NotificationsRoute
   '/search': typeof SearchRoute
   '/wishlist': typeof WishlistRoute
+  '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/empty-boxes': typeof AdminEmptyBoxesRoute
+  '/admin/products': typeof AdminProductsRoute
+  '/admin/ready-boxes': typeof AdminReadyBoxesRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
@@ -157,6 +199,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
+  '/admin': typeof AdminRouteWithChildren
   '/ai-finder': typeof AiFinderRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
@@ -166,6 +209,11 @@ export interface FileRoutesByTo {
   '/notifications': typeof NotificationsRoute
   '/search': typeof SearchRoute
   '/wishlist': typeof WishlistRoute
+  '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/empty-boxes': typeof AdminEmptyBoxesRoute
+  '/admin/products': typeof AdminProductsRoute
+  '/admin/ready-boxes': typeof AdminReadyBoxesRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
@@ -180,6 +228,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
+  '/admin': typeof AdminRouteWithChildren
   '/ai-finder': typeof AiFinderRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
@@ -189,6 +238,11 @@ export interface FileRoutesById {
   '/notifications': typeof NotificationsRoute
   '/search': typeof SearchRoute
   '/wishlist': typeof WishlistRoute
+  '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/empty-boxes': typeof AdminEmptyBoxesRoute
+  '/admin/products': typeof AdminProductsRoute
+  '/admin/ready-boxes': typeof AdminReadyBoxesRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
@@ -204,6 +258,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/account'
+    | '/admin'
     | '/ai-finder'
     | '/cart'
     | '/checkout'
@@ -213,6 +268,11 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/search'
     | '/wishlist'
+    | '/admin/categories'
+    | '/admin/dashboard'
+    | '/admin/empty-boxes'
+    | '/admin/products'
+    | '/admin/ready-boxes'
     | '/auth/forgot-password'
     | '/auth/sign-in'
     | '/auth/sign-up'
@@ -226,6 +286,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/account'
+    | '/admin'
     | '/ai-finder'
     | '/cart'
     | '/checkout'
@@ -235,6 +296,11 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/search'
     | '/wishlist'
+    | '/admin/categories'
+    | '/admin/dashboard'
+    | '/admin/empty-boxes'
+    | '/admin/products'
+    | '/admin/ready-boxes'
     | '/auth/forgot-password'
     | '/auth/sign-in'
     | '/auth/sign-up'
@@ -248,6 +314,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/account'
+    | '/admin'
     | '/ai-finder'
     | '/cart'
     | '/checkout'
@@ -257,6 +324,11 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/search'
     | '/wishlist'
+    | '/admin/categories'
+    | '/admin/dashboard'
+    | '/admin/empty-boxes'
+    | '/admin/products'
+    | '/admin/ready-boxes'
     | '/auth/forgot-password'
     | '/auth/sign-in'
     | '/auth/sign-up'
@@ -271,6 +343,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AccountRoute: typeof AccountRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AiFinderRoute: typeof AiFinderRoute
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
@@ -355,6 +428,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AiFinderRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/account': {
       id: '/account'
       path: '/account'
@@ -432,13 +512,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/ready-boxes': {
+      id: '/admin/ready-boxes'
+      path: '/ready-boxes'
+      fullPath: '/admin/ready-boxes'
+      preLoaderRoute: typeof AdminReadyBoxesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/products': {
+      id: '/admin/products'
+      path: '/products'
+      fullPath: '/admin/products'
+      preLoaderRoute: typeof AdminProductsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/empty-boxes': {
+      id: '/admin/empty-boxes'
+      path: '/empty-boxes'
+      fullPath: '/admin/empty-boxes'
+      preLoaderRoute: typeof AdminEmptyBoxesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/dashboard': {
+      id: '/admin/dashboard'
+      path: '/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/categories': {
+      id: '/admin/categories'
+      path: '/categories'
+      fullPath: '/admin/categories'
+      preLoaderRoute: typeof AdminCategoriesRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
+
+interface AdminRouteChildren {
+  AdminCategoriesRoute: typeof AdminCategoriesRoute
+  AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminEmptyBoxesRoute: typeof AdminEmptyBoxesRoute
+  AdminProductsRoute: typeof AdminProductsRoute
+  AdminReadyBoxesRoute: typeof AdminReadyBoxesRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminCategoriesRoute: AdminCategoriesRoute,
+  AdminDashboardRoute: AdminDashboardRoute,
+  AdminEmptyBoxesRoute: AdminEmptyBoxesRoute,
+  AdminProductsRoute: AdminProductsRoute,
+  AdminReadyBoxesRoute: AdminReadyBoxesRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AccountRoute: AccountRoute,
+  AdminRoute: AdminRouteWithChildren,
   AiFinderRoute: AiFinderRoute,
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,

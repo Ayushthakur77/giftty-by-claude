@@ -54,7 +54,7 @@ function generateOrderNumber() {
 }
 
 export const placeCodOrderFn = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => placeCodOrderInput.parse(d))
+  .validator((d: unknown) => placeCodOrderInput.parse(d))
   .handler(async ({ data }) => {
     // 1. Verify address ownership explicitly — never rely on RLS alone,
     //    since this handler uses the admin client (which bypasses RLS).
