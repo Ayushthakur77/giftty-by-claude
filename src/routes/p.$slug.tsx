@@ -1,7 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { getProductBySlug } from "@/lib/public-catalog";
+import { useCartStore } from "@/lib/cart-store";
 
 export const Route = createFileRoute("/p/$slug")({
   component: ProductPage,
@@ -13,6 +14,8 @@ function formatINR(paise: number) {
 
 function ProductPage() {
   const { slug } = Route.useParams();
+  const navigate = useNavigate();
+  const addLine = useCartStore((s) => s.addLine);
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
   const [personalizationName, setPersonalizationName] = useState("");
   const [personalizationMessage, setPersonalizationMessage] = useState("");
@@ -152,12 +155,37 @@ function ProductPage() {
         <div className="mt-8 flex gap-3">
           <button
             disabled={outOfStock}
+            onClick={() =>
+              addLine({
+                type: "product",
+                productId: product.id,
+                variantId: selectedVariant ?? undefined,
+                quantity: 1,
+                personalization: {
+                  name: personalizationName || undefined,
+                  message: personalizationMessage || undefined,
+                },
+              })
+            }
             className="flex-1 bg-maroon text-white rounded-lg py-3 font-medium hover:bg-maroon-dark disabled:opacity-40 disabled:cursor-not-allowed transition"
           >
             {outOfStock ? "Out of stock" : "Add to Cart"}
           </button>
           <button
             disabled={outOfStock}
+            onClick={() => {
+              addLine({
+                type: "product",
+                productId: product.id,
+                variantId: selectedVariant ?? undefined,
+                quantity: 1,
+                personalization: {
+                  name: personalizationName || undefined,
+                  message: personalizationMessage || undefined,
+                },
+              });
+              navigate({ to: "/cart" });
+            }}
             className="flex-1 border border-maroon text-maroon rounded-lg py-3 font-medium hover:bg-cream disabled:opacity-40 disabled:cursor-not-allowed transition"
           >
             Buy Now
