@@ -1,4 +1,4 @@
-import { createRootRoute, Outlet, Scripts } from "@tanstack/react-router";
+import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import appCss from "@/styles/app.css?url";
@@ -25,8 +25,7 @@ function RootComponent() {
   return (
     <html lang="en">
       <head>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <HeadContent />
       </head>
       <body className="bg-white text-gray-900 antialiased">
         <QueryClientProvider client={queryClient}>
