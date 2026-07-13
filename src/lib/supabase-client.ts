@@ -17,6 +17,16 @@ const publishableKey =
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
   (typeof process !== "undefined" && (process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY));
 
+// TEMPORARY DIAGNOSTIC — remove after root cause is found.
+if (typeof process !== "undefined") {
+  console.log(
+    "[env-diagnostic] process.env keys containing SUPABASE:",
+    Object.keys(process.env).filter((k) => k.includes("SUPABASE"))
+  );
+} else {
+  console.log("[env-diagnostic] typeof process === 'undefined' in this context");
+}
+
 if (!url || !publishableKey) {
   throw new Error(
     "Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY. Check your .env file."
