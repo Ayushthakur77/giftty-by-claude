@@ -32,8 +32,11 @@ import { Route as AuthSignInRouteImport } from './routes/auth.sign-in'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
 import { Route as AdminReadyBoxesRouteImport } from './routes/admin.ready-boxes'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
+import { Route as AdminOrdersRouteImport } from './routes/admin.orders'
 import { Route as AdminEmptyBoxesRouteImport } from './routes/admin.empty-boxes'
+import { Route as AdminDeliveryRouteImport } from './routes/admin.delivery'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
+import { Route as AdminCouponsRouteImport } from './routes/admin.coupons'
 import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 
 const WishlistRoute = WishlistRouteImport.update({
@@ -151,14 +154,29 @@ const AdminProductsRoute = AdminProductsRouteImport.update({
   path: '/products',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminOrdersRoute = AdminOrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminEmptyBoxesRoute = AdminEmptyBoxesRouteImport.update({
   id: '/empty-boxes',
   path: '/empty-boxes',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminDeliveryRoute = AdminDeliveryRouteImport.update({
+  id: '/delivery',
+  path: '/delivery',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCouponsRoute = AdminCouponsRouteImport.update({
+  id: '/coupons',
+  path: '/coupons',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
@@ -182,8 +200,11 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/wishlist': typeof WishlistRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/coupons': typeof AdminCouponsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/delivery': typeof AdminDeliveryRoute
   '/admin/empty-boxes': typeof AdminEmptyBoxesRoute
+  '/admin/orders': typeof AdminOrdersRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/ready-boxes': typeof AdminReadyBoxesRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -210,8 +231,11 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/wishlist': typeof WishlistRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/coupons': typeof AdminCouponsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/delivery': typeof AdminDeliveryRoute
   '/admin/empty-boxes': typeof AdminEmptyBoxesRoute
+  '/admin/orders': typeof AdminOrdersRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/ready-boxes': typeof AdminReadyBoxesRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -239,8 +263,11 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/wishlist': typeof WishlistRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/coupons': typeof AdminCouponsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/delivery': typeof AdminDeliveryRoute
   '/admin/empty-boxes': typeof AdminEmptyBoxesRoute
+  '/admin/orders': typeof AdminOrdersRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/ready-boxes': typeof AdminReadyBoxesRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -269,8 +296,11 @@ export interface FileRouteTypes {
     | '/search'
     | '/wishlist'
     | '/admin/categories'
+    | '/admin/coupons'
     | '/admin/dashboard'
+    | '/admin/delivery'
     | '/admin/empty-boxes'
+    | '/admin/orders'
     | '/admin/products'
     | '/admin/ready-boxes'
     | '/auth/forgot-password'
@@ -297,8 +327,11 @@ export interface FileRouteTypes {
     | '/search'
     | '/wishlist'
     | '/admin/categories'
+    | '/admin/coupons'
     | '/admin/dashboard'
+    | '/admin/delivery'
     | '/admin/empty-boxes'
+    | '/admin/orders'
     | '/admin/products'
     | '/admin/ready-boxes'
     | '/auth/forgot-password'
@@ -325,8 +358,11 @@ export interface FileRouteTypes {
     | '/search'
     | '/wishlist'
     | '/admin/categories'
+    | '/admin/coupons'
     | '/admin/dashboard'
+    | '/admin/delivery'
     | '/admin/empty-boxes'
+    | '/admin/orders'
     | '/admin/products'
     | '/admin/ready-boxes'
     | '/auth/forgot-password'
@@ -526,6 +562,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminProductsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/orders': {
+      id: '/admin/orders'
+      path: '/orders'
+      fullPath: '/admin/orders'
+      preLoaderRoute: typeof AdminOrdersRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/empty-boxes': {
       id: '/admin/empty-boxes'
       path: '/empty-boxes'
@@ -533,11 +576,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminEmptyBoxesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/delivery': {
+      id: '/admin/delivery'
+      path: '/delivery'
+      fullPath: '/admin/delivery'
+      preLoaderRoute: typeof AdminDeliveryRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/dashboard': {
       id: '/admin/dashboard'
       path: '/dashboard'
       fullPath: '/admin/dashboard'
       preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/coupons': {
+      id: '/admin/coupons'
+      path: '/coupons'
+      fullPath: '/admin/coupons'
+      preLoaderRoute: typeof AdminCouponsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/categories': {
@@ -552,16 +609,22 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminCategoriesRoute: typeof AdminCategoriesRoute
+  AdminCouponsRoute: typeof AdminCouponsRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminDeliveryRoute: typeof AdminDeliveryRoute
   AdminEmptyBoxesRoute: typeof AdminEmptyBoxesRoute
+  AdminOrdersRoute: typeof AdminOrdersRoute
   AdminProductsRoute: typeof AdminProductsRoute
   AdminReadyBoxesRoute: typeof AdminReadyBoxesRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminCategoriesRoute: AdminCategoriesRoute,
+  AdminCouponsRoute: AdminCouponsRoute,
   AdminDashboardRoute: AdminDashboardRoute,
+  AdminDeliveryRoute: AdminDeliveryRoute,
   AdminEmptyBoxesRoute: AdminEmptyBoxesRoute,
+  AdminOrdersRoute: AdminOrdersRoute,
   AdminProductsRoute: AdminProductsRoute,
   AdminReadyBoxesRoute: AdminReadyBoxesRoute,
 }

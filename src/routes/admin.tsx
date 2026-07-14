@@ -1,16 +1,19 @@
 import { createFileRoute, Link, Outlet, useNavigate, useLocation } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useIsSuperAdmin } from "@/lib/use-role";
-import { LayoutDashboard, Package, FolderTree, Gift, PackageOpen } from "lucide-react";
+import { LayoutDashboard, Package, FolderTree, Gift, PackageOpen, ClipboardList, Ticket, Truck } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({ component: AdminLayout });
 
 const NAV_ITEMS = [
   { to: "/admin/dashboard" as const, label: "Dashboard", icon: LayoutDashboard },
+  { to: "/admin/orders" as const, label: "Orders", icon: ClipboardList },
   { to: "/admin/products" as const, label: "Products", icon: Package },
   { to: "/admin/categories" as const, label: "Categories", icon: FolderTree },
   { to: "/admin/empty-boxes" as const, label: "Empty Boxes", icon: PackageOpen },
   { to: "/admin/ready-boxes" as const, label: "Ready Boxes", icon: Gift },
+  { to: "/admin/coupons" as const, label: "Coupons", icon: Ticket },
+  { to: "/admin/delivery" as const, label: "Delivery", icon: Truck },
 ];
 
 function AdminLayout() {
