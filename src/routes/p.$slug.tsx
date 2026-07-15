@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { getProductBySlug } from "@/lib/public-catalog";
 import { useCartStore } from "@/lib/cart-store";
+import { ProductReviews } from "@/components/ProductReviews";
 
 export const Route = createFileRoute("/p/$slug")({
   component: ProductPage,
@@ -196,6 +197,10 @@ function ProductPage() {
           <h2 className="font-medium text-gray-900 mb-2">Description</h2>
           <p className="text-gray-600 text-sm whitespace-pre-line">{product.long_description}</p>
         </div>
+      </div>
+
+      <div className="md:col-span-2">
+        <ProductReviews productId={product.id} />
       </div>
     </div>
   );

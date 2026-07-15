@@ -1,26 +1,130 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Sparkles } from "lucide-react";
+import { useState } from "react";
+import { Sparkles, Loader2 } from "lucide-react";
+import { getAiGiftRecommendationFn } from "@/lib/ai.functions";
+import { useSession } from "@/lib/use-session";
+import { useCartStore } from "@/lib/cart-store";
 
 export const Route = createFileRoute("/ai-finder")({ component: AiFinderPage });
 
-/**
- * Placeholder for the AI Gift Assistant (Gemini-powered gift recommendation,
- * AI box builder, greeting card generator, natural-language search).
- * Intentionally NOT wired to a fake/mock response — the real implementation
- * needs a server function calling the Gemini API (GEMINI_API_KEY, server-only)
- * and is the next build phase, not this one. Honest "coming soon" beats a
- * placeholder that pretends to work.
- */
+function formatINR(paise: number) {
+  return `₹${(paise / 100).toLocaleString("en-IN")}`;
+}
+
+const EXAMPLE_PROMPTS = [
+  "Birthday gift for my mom, she loves gardening, under ₹1500",
+  "Anniversary gift for my husband, something romantic",
+  "Gift for a friend who just got a new job",
+];
+
+type Result = {
+  reasoning: string;
+  suggestedGreeting: string;
+  products: { id: string; name: string; slug: string; pricePaise: number; categoryName: string | null }[];
+};
+
 function AiFinderPage() {
+  const { user } = useSession();
+  const addLine = useCartStore((s) => s.addLine);
+  const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<Result | null>(null);
+
+  async function handleSubmit() {
+    if (query.trim().length < 3) return;
+    setLoading(true);
+    setError(null);
+    setResult(null);
+
+    const res = await getAiGiftRecommendationFn({ data: { query: query.trim(), userId: user?.id } });
+    setLoading(false);
+
+    if (!res.ok) {
+      setError(res.error);
+      return;
+    }
+    setResult(res);
+  }
+
   return (
-    <div className="max-w-2xl mx-auto px-4 py-20 text-center">
-      <Sparkles className="w-10 h-10 mx-auto mb-4 text-maroon" />
-      <h1 className="font-heading text-2xl font-bold text-gray-900 mb-2">AI Gift Finder</h1>
-      <p className="text-gray-500 mb-8">
-        Tell us the occasion, who it's for, and your budget — our AI will suggest the perfect
-        gift, build a custom box, or write a greeting message for you. Coming very soon.
+    <div className="max-w-3xl mx-auto px-4 py-12">
+      <div className="text-center mb-8">
+        <Sparkles className="w-10 h-10 mx-auto mb-3 text-maroon" />
+        <h1 className="font-heading text-2xl font-bold text-gray-900 mb-2">AI Gift Finder</h1>
+        <p className="text-gray-500">Tell us the occasion, who it's for, and your budget — we'll suggest the perfect gift.</p>
+      </div>
+
+      <div className="flex gap-2">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+          placeholder="e.g. Birthday gift for my sister, she loves chocolate, under ₹1000"
+          className="flex-1 border border-gray-300 rounded-lg px-4 py-3 text-sm"
+        />
+        <button
+          onClick={handleSubmit}
+          disabled={loading || query.trim().length < 3}
+          className="bg-maroon text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-maroon-dark disabled:opacity-40 transition flex items-center gap-2"
+        >
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+          Find gifts
+        </button>
+      </div>
+
+      {!result && !loading && (
+        <div className="flex flex-wrap gap-2 mt-4">
+          {EXAMPLE_PROMPTS.map((p) => (
+            <button key={p} onClick={() => setQuery(p)} className="text-xs border border-gray-200 rounded-full px-3 py-1.5 text-gray-500 hover:border-maroon hover:text-maroon transition">
+              {p}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {error && <p className="text-red-600 text-sm mt-4">{error}</p>}
+
+      {result && (
+        <div className="mt-8">
+          <p className="text-sm text-gray-600 italic mb-4">"{result.reasoning}"</p>
+
+          {result.products.length === 0 && (
+            <p className="text-gray-400 text-sm">No matching products found — try rephrasing your request.</p>
+          )}
+
+          {result.products.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {result.products.map((p) => (
+                <div key={p.id} className="border border-gray-100 rounded-xl p-3">
+                  <Link to="/p/$slug" params={{ slug: p.slug }} className="block">
+                    <p className="text-sm text-gray-800 line-clamp-2">{p.name}</p>
+                    <p className="text-xs text-gray-400">{p.categoryName}</p>
+                    <p className="font-semibold text-maroon mt-1">{formatINR(p.pricePaise)}</p>
+                  </Link>
+                  <button
+                    onClick={() => addLine({ type: "product", productId: p.id, quantity: 1 })}
+                    className="mt-2 w-full text-xs bg-maroon text-white rounded-lg py-2 hover:bg-maroon-dark transition"
+                  >
+                    Add to Cart
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {result.suggestedGreeting && (
+            <div className="mt-6 border border-gold/30 bg-cream/40 rounded-xl p-4">
+              <p className="text-xs font-medium text-gray-500 mb-1">Suggested gift note</p>
+              <p className="text-sm text-gray-700 italic">"{result.suggestedGreeting}"</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      <p className="text-center mt-10">
+        <Link to="/" className="text-maroon hover:underline text-sm">Browse all gifts →</Link>
       </p>
-      <Link to="/" className="text-maroon hover:underline">Browse gifts in the meantime →</Link>
     </div>
   );
 }
