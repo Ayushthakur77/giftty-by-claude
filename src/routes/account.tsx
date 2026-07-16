@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase-client";
 import { useSession } from "@/lib/use-session";
+import { useIsSuperAdmin } from "@/lib/use-role";
 
 export const Route = createFileRoute("/account")({ component: AccountPage });
 
@@ -12,6 +13,7 @@ function formatINR(paise: number) {
 
 function AccountPage() {
   const { user, loading: sessionLoading } = useSession();
+  const { isSuperAdmin } = useIsSuperAdmin();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [birthday, setBirthday] = useState("");
@@ -97,6 +99,16 @@ function AccountPage() {
           Sign out
         </button>
       </div>
+
+      {isSuperAdmin && (
+        <Link
+          to="/admin/dashboard"
+          className="block bg-maroon text-white rounded-xl p-4 mb-6 hover:bg-maroon-dark transition"
+        >
+          <p className="font-medium">You have Admin access</p>
+          <p className="text-sm text-white/80">Go to Admin Panel →</p>
+        </Link>
+      )}
 
       {wallet && wallet.balance_paise > 0 && (
         <div className="border border-gold/30 bg-cream/40 rounded-xl p-4 mb-6 flex items-center justify-between">

@@ -1,16 +1,18 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Search, Heart, ShoppingBag, User, Bell, Sparkles } from "lucide-react";
+import { Search, Heart, ShoppingBag, User, Bell, Sparkles, ShieldCheck } from "lucide-react";
 import { listCategories } from "@/lib/public-catalog";
 import { useCartStore } from "@/lib/cart-store";
 import { useSession } from "@/lib/use-session";
+import { useIsSuperAdmin } from "@/lib/use-role";
 
 export function Header() {
   const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState("");
   const cartCount = useCartStore((s) => s.lines.reduce((sum, l) => sum + ("quantity" in l ? l.quantity : 1), 0));
   const { user } = useSession();
+  const { isSuperAdmin } = useIsSuperAdmin();
 
   // Real DB-backed categories — this is the fix for the v1 bug where admin-created
   // categories never appeared anywhere on the storefront.
@@ -49,6 +51,12 @@ export function Header() {
           </form>
 
           <nav className="flex items-center gap-4 shrink-0 text-gray-600">
+            {isSuperAdmin && (
+              <Link to="/admin/dashboard" aria-label="Admin Panel" className="flex items-center gap-1 text-maroon hover:text-maroon-dark font-medium text-sm">
+                <ShieldCheck className="w-5 h-5" />
+                <span className="hidden md:inline">Admin</span>
+              </Link>
+            )}
             <Link to="/notifications" aria-label="Notifications" className="hover:text-maroon">
               <Bell className="w-5 h-5" />
             </Link>
