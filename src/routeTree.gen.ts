@@ -30,6 +30,7 @@ import { Route as BoxSlugRouteImport } from './routes/box.$slug'
 import { Route as AuthSignUpRouteImport } from './routes/auth.sign-up'
 import { Route as AuthSignInRouteImport } from './routes/auth.sign-in'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
+import { Route as ApiRazorpayWebhookRouteImport } from './routes/api.razorpay-webhook'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminReviewsRouteImport } from './routes/admin.reviews'
 import { Route as AdminReportsRouteImport } from './routes/admin.reports'
@@ -43,6 +44,8 @@ import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
 import { Route as AdminCouponsRouteImport } from './routes/admin.coupons'
 import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
+import { Route as AccountReferralsRouteImport } from './routes/account.referrals'
+import { Route as ApiCronBirthdayRemindersRouteImport } from './routes/api.cron.birthday-reminders'
 
 const WishlistRoute = WishlistRouteImport.update({
   id: '/wishlist',
@@ -149,6 +152,11 @@ const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
   path: '/auth/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiRazorpayWebhookRoute = ApiRazorpayWebhookRouteImport.update({
+  id: '/api/razorpay-webhook',
+  path: '/api/razorpay-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminSettingsRoute = AdminSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -214,11 +222,22 @@ const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
   path: '/categories',
   getParentRoute: () => AdminRoute,
 } as any)
+const AccountReferralsRoute = AccountReferralsRouteImport.update({
+  id: '/referrals',
+  path: '/referrals',
+  getParentRoute: () => AccountRoute,
+} as any)
+const ApiCronBirthdayRemindersRoute =
+  ApiCronBirthdayRemindersRouteImport.update({
+    id: '/api/cron/birthday-reminders',
+    path: '/api/cron/birthday-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/account': typeof AccountRoute
+  '/account': typeof AccountRouteWithChildren
   '/admin': typeof AdminRouteWithChildren
   '/ai-finder': typeof AiFinderRoute
   '/cart': typeof CartRoute
@@ -229,6 +248,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof NotificationsRoute
   '/search': typeof SearchRoute
   '/wishlist': typeof WishlistRoute
+  '/account/referrals': typeof AccountReferralsRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/coupons': typeof AdminCouponsRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -242,6 +262,7 @@ export interface FileRoutesByFullPath {
   '/admin/reports': typeof AdminReportsRoute
   '/admin/reviews': typeof AdminReviewsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/api/razorpay-webhook': typeof ApiRazorpayWebhookRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
@@ -250,11 +271,12 @@ export interface FileRoutesByFullPath {
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
   '/p/$slug': typeof PSlugRoute
+  '/api/cron/birthday-reminders': typeof ApiCronBirthdayRemindersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/account': typeof AccountRoute
+  '/account': typeof AccountRouteWithChildren
   '/admin': typeof AdminRouteWithChildren
   '/ai-finder': typeof AiFinderRoute
   '/cart': typeof CartRoute
@@ -265,6 +287,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof NotificationsRoute
   '/search': typeof SearchRoute
   '/wishlist': typeof WishlistRoute
+  '/account/referrals': typeof AccountReferralsRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/coupons': typeof AdminCouponsRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -278,6 +301,7 @@ export interface FileRoutesByTo {
   '/admin/reports': typeof AdminReportsRoute
   '/admin/reviews': typeof AdminReviewsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/api/razorpay-webhook': typeof ApiRazorpayWebhookRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
@@ -286,12 +310,13 @@ export interface FileRoutesByTo {
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
   '/p/$slug': typeof PSlugRoute
+  '/api/cron/birthday-reminders': typeof ApiCronBirthdayRemindersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/account': typeof AccountRoute
+  '/account': typeof AccountRouteWithChildren
   '/admin': typeof AdminRouteWithChildren
   '/ai-finder': typeof AiFinderRoute
   '/cart': typeof CartRoute
@@ -302,6 +327,7 @@ export interface FileRoutesById {
   '/notifications': typeof NotificationsRoute
   '/search': typeof SearchRoute
   '/wishlist': typeof WishlistRoute
+  '/account/referrals': typeof AccountReferralsRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/coupons': typeof AdminCouponsRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -315,6 +341,7 @@ export interface FileRoutesById {
   '/admin/reports': typeof AdminReportsRoute
   '/admin/reviews': typeof AdminReviewsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/api/razorpay-webhook': typeof ApiRazorpayWebhookRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
@@ -323,6 +350,7 @@ export interface FileRoutesById {
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
   '/p/$slug': typeof PSlugRoute
+  '/api/cron/birthday-reminders': typeof ApiCronBirthdayRemindersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -340,6 +368,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/search'
     | '/wishlist'
+    | '/account/referrals'
     | '/admin/categories'
     | '/admin/coupons'
     | '/admin/customers'
@@ -353,6 +382,7 @@ export interface FileRouteTypes {
     | '/admin/reports'
     | '/admin/reviews'
     | '/admin/settings'
+    | '/api/razorpay-webhook'
     | '/auth/forgot-password'
     | '/auth/sign-in'
     | '/auth/sign-up'
@@ -361,6 +391,7 @@ export interface FileRouteTypes {
     | '/legal/privacy'
     | '/legal/terms'
     | '/p/$slug'
+    | '/api/cron/birthday-reminders'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -376,6 +407,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/search'
     | '/wishlist'
+    | '/account/referrals'
     | '/admin/categories'
     | '/admin/coupons'
     | '/admin/customers'
@@ -389,6 +421,7 @@ export interface FileRouteTypes {
     | '/admin/reports'
     | '/admin/reviews'
     | '/admin/settings'
+    | '/api/razorpay-webhook'
     | '/auth/forgot-password'
     | '/auth/sign-in'
     | '/auth/sign-up'
@@ -397,6 +430,7 @@ export interface FileRouteTypes {
     | '/legal/privacy'
     | '/legal/terms'
     | '/p/$slug'
+    | '/api/cron/birthday-reminders'
   id:
     | '__root__'
     | '/'
@@ -412,6 +446,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/search'
     | '/wishlist'
+    | '/account/referrals'
     | '/admin/categories'
     | '/admin/coupons'
     | '/admin/customers'
@@ -425,6 +460,7 @@ export interface FileRouteTypes {
     | '/admin/reports'
     | '/admin/reviews'
     | '/admin/settings'
+    | '/api/razorpay-webhook'
     | '/auth/forgot-password'
     | '/auth/sign-in'
     | '/auth/sign-up'
@@ -433,12 +469,13 @@ export interface FileRouteTypes {
     | '/legal/privacy'
     | '/legal/terms'
     | '/p/$slug'
+    | '/api/cron/birthday-reminders'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
-  AccountRoute: typeof AccountRoute
+  AccountRoute: typeof AccountRouteWithChildren
   AdminRoute: typeof AdminRouteWithChildren
   AiFinderRoute: typeof AiFinderRoute
   CartRoute: typeof CartRoute
@@ -449,6 +486,7 @@ export interface RootRouteChildren {
   NotificationsRoute: typeof NotificationsRoute
   SearchRoute: typeof SearchRoute
   WishlistRoute: typeof WishlistRoute
+  ApiRazorpayWebhookRoute: typeof ApiRazorpayWebhookRoute
   AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
   AuthSignInRoute: typeof AuthSignInRoute
   AuthSignUpRoute: typeof AuthSignUpRoute
@@ -457,6 +495,7 @@ export interface RootRouteChildren {
   LegalPrivacyRoute: typeof LegalPrivacyRoute
   LegalTermsRoute: typeof LegalTermsRoute
   PSlugRoute: typeof PSlugRoute
+  ApiCronBirthdayRemindersRoute: typeof ApiCronBirthdayRemindersRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -608,6 +647,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/razorpay-webhook': {
+      id: '/api/razorpay-webhook'
+      path: '/api/razorpay-webhook'
+      fullPath: '/api/razorpay-webhook'
+      preLoaderRoute: typeof ApiRazorpayWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/settings': {
       id: '/admin/settings'
       path: '/settings'
@@ -699,8 +745,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCategoriesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/account/referrals': {
+      id: '/account/referrals'
+      path: '/referrals'
+      fullPath: '/account/referrals'
+      preLoaderRoute: typeof AccountReferralsRouteImport
+      parentRoute: typeof AccountRoute
+    }
+    '/api/cron/birthday-reminders': {
+      id: '/api/cron/birthday-reminders'
+      path: '/api/cron/birthday-reminders'
+      fullPath: '/api/cron/birthday-reminders'
+      preLoaderRoute: typeof ApiCronBirthdayRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
+
+interface AccountRouteChildren {
+  AccountReferralsRoute: typeof AccountReferralsRoute
+}
+
+const AccountRouteChildren: AccountRouteChildren = {
+  AccountReferralsRoute: AccountReferralsRoute,
+}
+
+const AccountRouteWithChildren =
+  AccountRoute._addFileChildren(AccountRouteChildren)
 
 interface AdminRouteChildren {
   AdminCategoriesRoute: typeof AdminCategoriesRoute
@@ -739,7 +810,7 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
-  AccountRoute: AccountRoute,
+  AccountRoute: AccountRouteWithChildren,
   AdminRoute: AdminRouteWithChildren,
   AiFinderRoute: AiFinderRoute,
   CartRoute: CartRoute,
@@ -750,6 +821,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotificationsRoute: NotificationsRoute,
   SearchRoute: SearchRoute,
   WishlistRoute: WishlistRoute,
+  ApiRazorpayWebhookRoute: ApiRazorpayWebhookRoute,
   AuthForgotPasswordRoute: AuthForgotPasswordRoute,
   AuthSignInRoute: AuthSignInRoute,
   AuthSignUpRoute: AuthSignUpRoute,
@@ -758,6 +830,7 @@ const rootRouteChildren: RootRouteChildren = {
   LegalPrivacyRoute: LegalPrivacyRoute,
   LegalTermsRoute: LegalTermsRoute,
   PSlugRoute: PSlugRoute,
+  ApiCronBirthdayRemindersRoute: ApiCronBirthdayRemindersRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

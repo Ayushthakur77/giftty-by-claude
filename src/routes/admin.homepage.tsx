@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase-client";
 import { Modal } from "@/components/Modal";
+import { ImageUploader } from "@/components/ImageUploader";
 import { Pencil, Trash2, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/admin/homepage")({ component: AdminHomepagePage });
@@ -130,7 +131,11 @@ function AdminHomepagePage() {
 
       <Modal open={modalOpen} onOpenChange={setModalOpen} title={form.id ? "Edit banner" : "New banner"}>
         <div className="space-y-3">
-          <input placeholder="Image URL" value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
+          <ImageUploader
+            images={form.image_url ? [form.image_url] : []}
+            onChange={(images) => setForm({ ...form, image_url: images[images.length - 1] ?? "" })}
+            folder="banners"
+          />
           <input placeholder="Title (optional)" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
           <input placeholder="Subtitle (optional)" value={form.subtitle} onChange={(e) => setForm({ ...form, subtitle: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
           <input placeholder="Link (optional)" value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />

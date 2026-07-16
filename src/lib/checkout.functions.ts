@@ -14,8 +14,9 @@ import { supabaseAdmin } from "@/server/supabase-admin.server";
 import { loadCatalogSnapshot, loadDeliveryCharges } from "@/server/catalog-repo.server";
 import { priceCart, computeShipping, computeTax } from "@/lib/pricing";
 import type { CartLine } from "@/lib/pricing";
+import { maybeRewardReferral } from "@/lib/referral.functions";
 
-const cartLineSchema = z.union([
+export const cartLineSchema = z.union([
   z.object({
     type: z.literal("product"),
     productId: z.string().uuid(),
@@ -46,9 +47,10 @@ const placeCodOrderInput = z.object({
   addressId: z.string().uuid(),
   lines: z.array(cartLineSchema).min(1).max(50),
   couponCode: z.string().min(2).max(30).optional(),
+  useWallet: z.boolean().optional(),
 });
 
-function generateOrderNumber() {
+export function generateOrderNumber() {
   const rand = Math.random().toString(36).slice(2, 8).toUpperCase();
   return `GFT${Date.now().toString().slice(-6)}${rand}`;
 }
@@ -109,7 +111,16 @@ export const placeCodOrderFn = createServerFn({ method: "POST" })
     }
 
     const taxPaise = computeTax(priced.subtotalPaise - discountPaise, 18);
-    const totalPaise = priced.subtotalPaise - discountPaise + shippingResult.shippingPaise + taxPaise;
+    let totalPaise = priced.subtotalPaise - discountPaise + shippingResult.shippingPaise + taxPaise;
+
+    // 3b. Wallet — apply up to the available balance against the total.
+    let walletUsedPaise = 0;
+    if (data.useWallet) {
+      const { data: wallet } = await supabaseAdmin.from("wallets").select("balance_paise").eq("user_id", data.userId).maybeSingle();
+      const available = wallet?.balance_paise ?? 0;
+      walletUsedPaise = Math.min(available, totalPaise);
+      totalPaise -= walletUsedPaise;
+    }
 
     // 4. Create the order.
     const orderNumber = generateOrderNumber();
@@ -126,6 +137,7 @@ export const placeCodOrderFn = createServerFn({ method: "POST" })
         shipping_paise: shippingResult.shippingPaise,
         tax_paise: taxPaise,
         discount_paise: discountPaise,
+        wallet_used_paise: walletUsedPaise,
         total_paise: totalPaise,
         coupon_id: couponId,
       })
@@ -133,6 +145,20 @@ export const placeCodOrderFn = createServerFn({ method: "POST" })
       .single();
 
     if (orderErr || !order) return { ok: false as const, error: orderErr?.message ?? "Failed to create order" };
+
+    // 4b. Debit the wallet atomically — roll back the order if the balance changed underneath us.
+    if (walletUsedPaise > 0) {
+      const { data: debited } = await supabaseAdmin.rpc("apply_wallet_transaction", {
+        _user_id: data.userId,
+        _amount_paise: -walletUsedPaise,
+        _reason: "order_payment",
+        _order_id: order.id,
+      });
+      if (!debited) {
+        await supabaseAdmin.from("orders").delete().eq("id", order.id);
+        return { ok: false as const, error: "Wallet balance changed — please try again" };
+      }
+    }
 
     // 5. Redeem the coupon atomically — roll back the order if it fails
     //    (e.g. limit was hit by a concurrent request between validate and here).
@@ -213,6 +239,9 @@ export const placeCodOrderFn = createServerFn({ method: "POST" })
       body: `Your order #${orderNumber} has been confirmed.`,
       link: `/account`,
     });
+
+    // Reward a pending referral, if this was the customer's first order.
+    await maybeRewardReferral(data.userId);
 
     return { ok: true as const, orderId: order.id, orderNumber };
   });

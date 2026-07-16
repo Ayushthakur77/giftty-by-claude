@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase-client";
 import { Modal } from "@/components/Modal";
+import { ImageUploader } from "@/components/ImageUploader";
 import { Pencil, Trash2, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/admin/empty-boxes")({ component: AdminEmptyBoxesPage });
@@ -27,12 +28,13 @@ type BoxForm = {
   stock: string;
   status: "active" | "draft" | "archived";
   visible: boolean;
+  images: string[];
 };
 
 const EMPTY_FORM: BoxForm = {
   name: "", capacity: "5", max_weight_grams: "2000", base_price: "",
   category_ids: [], allows_ribbon: true, allows_filler: true, allows_greeting_card: true,
-  stock: "10", status: "active", visible: true,
+  stock: "10", status: "active", visible: true, images: [],
 };
 
 function AdminEmptyBoxesPage() {
@@ -78,6 +80,7 @@ function AdminEmptyBoxesPage() {
       stock: b.stock.toString(),
       status: b.status,
       visible: b.visible,
+      images: Array.isArray(b.images) ? b.images : [],
     });
     setError(null);
     setModalOpen(true);
@@ -111,7 +114,7 @@ function AdminEmptyBoxesPage() {
       stock: parseInt(form.stock, 10) || 0,
       status: form.status,
       visible: form.visible,
-      images: [],
+      images: form.images,
     };
 
     const result = form.id
@@ -169,6 +172,7 @@ function AdminEmptyBoxesPage() {
 
       <Modal open={modalOpen} onOpenChange={setModalOpen} title={form.id ? "Edit box" : "New empty box"}>
         <div className="space-y-3">
+          <ImageUploader images={form.images} onChange={(images) => setForm({ ...form, images })} folder="empty-boxes" />
           <input placeholder="Box name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
           <div className="grid grid-cols-3 gap-3">
             <input placeholder="Capacity" type="number" value={form.capacity} onChange={(e) => setForm({ ...form, capacity: e.target.value })} className="border rounded-lg px-3 py-2 text-sm" />

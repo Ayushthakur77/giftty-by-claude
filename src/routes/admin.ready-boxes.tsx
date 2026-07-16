@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase-client";
 import { Modal } from "@/components/Modal";
+import { ImageUploader } from "@/components/ImageUploader";
 import { Pencil, Trash2, Plus, Package } from "lucide-react";
 
 export const Route = createFileRoute("/admin/ready-boxes")({ component: AdminReadyBoxesPage });
@@ -22,8 +23,9 @@ type BoxForm = {
   stock: string;
   status: "active" | "draft" | "archived";
   visible: boolean;
+  images: string[];
 };
-const EMPTY_FORM: BoxForm = { name: "", description: "", price: "", stock: "10", status: "active", visible: true };
+const EMPTY_FORM: BoxForm = { name: "", description: "", price: "", stock: "10", status: "active", visible: true, images: [] };
 
 function AdminReadyBoxesPage() {
   const queryClient = useQueryClient();
@@ -62,7 +64,7 @@ function AdminReadyBoxesPage() {
     setForm({
       id: b.id, name: b.name, description: b.description ?? "",
       price: (b.price_paise / 100).toString(), stock: b.stock.toString(),
-      status: b.status, visible: b.visible,
+      status: b.status, visible: b.visible, images: Array.isArray(b.images) ? b.images : [],
     });
     setError(null);
     setModalOpen(true);
@@ -79,7 +81,7 @@ function AdminReadyBoxesPage() {
     const payload = {
       name: form.name.trim(), slug: slugify(form.name), description: form.description || null,
       price_paise: Math.round(parseFloat(form.price) * 100), stock: parseInt(form.stock, 10) || 0,
-      status: form.status, visible: form.visible, images: [],
+      status: form.status, visible: form.visible, images: form.images,
     };
 
     const result = form.id
@@ -148,6 +150,7 @@ function AdminReadyBoxesPage() {
 
       <Modal open={modalOpen} onOpenChange={setModalOpen} title={form.id ? "Edit box" : "New ready-made box"}>
         <div className="space-y-3">
+          <ImageUploader images={form.images} onChange={(images) => setForm({ ...form, images })} folder="ready-boxes" />
           <input placeholder="Box name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
           <textarea placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} className="w-full border rounded-lg px-3 py-2 text-sm" />
           <div className="grid grid-cols-2 gap-3">

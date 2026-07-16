@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase-client";
 import { Modal } from "@/components/Modal";
+import { ImageUploader } from "@/components/ImageUploader";
 import { Pencil, Trash2, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/admin/products")({ component: AdminProductsPage });
@@ -24,11 +25,12 @@ type ProductForm = {
   short_description: string;
   status: "active" | "draft" | "archived";
   is_gift_builder_compatible: boolean;
+  images: string[];
 };
 
 const EMPTY_FORM: ProductForm = {
   name: "", category_id: "", price: "", stock: "0", short_description: "",
-  status: "active", is_gift_builder_compatible: false,
+  status: "active", is_gift_builder_compatible: false, images: [],
 };
 
 function AdminProductsPage() {
@@ -70,6 +72,7 @@ function AdminProductsPage() {
       short_description: p.short_description ?? "",
       status: p.status,
       is_gift_builder_compatible: p.is_gift_builder_compatible,
+      images: Array.isArray(p.images) ? p.images : [],
     });
     setError(null);
     setModalOpen(true);
@@ -92,7 +95,7 @@ function AdminProductsPage() {
       short_description: form.short_description || null,
       status: form.status,
       is_gift_builder_compatible: form.is_gift_builder_compatible,
-      images: [],
+      images: form.images,
     };
 
     const result = form.id
@@ -171,6 +174,7 @@ function AdminProductsPage() {
 
       <Modal open={modalOpen} onOpenChange={setModalOpen} title={form.id ? "Edit product" : "New product"}>
         <div className="space-y-3">
+          <ImageUploader images={form.images} onChange={(images) => setForm({ ...form, images })} folder="products" />
           <input placeholder="Product name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
           <select value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm">
             <option value="">No category</option>

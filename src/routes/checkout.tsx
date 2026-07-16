@@ -5,6 +5,8 @@ import { supabase } from "@/lib/supabase-client";
 import { useSession } from "@/lib/use-session";
 import { useCartStore } from "@/lib/cart-store";
 import { placeCodOrderFn } from "@/lib/checkout.functions";
+import { initiateRazorpayCheckoutFn, verifyRazorpayPaymentFn } from "@/lib/payments.functions";
+import { loadRazorpayScript } from "@/lib/razorpay";
 
 export const Route = createFileRoute("/checkout")({ component: CheckoutPage });
 
@@ -27,6 +29,8 @@ function CheckoutPage() {
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [showNewAddress, setShowNewAddress] = useState(false);
   const [couponCode, setCouponCode] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"cod" | "razorpay">("razorpay");
+  const [useWallet, setUseWallet] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [newAddress, setNewAddress] = useState({
@@ -38,6 +42,15 @@ function CheckoutPage() {
     queryFn: async () => {
       const { data } = await supabase.from("addresses").select("*").order("is_default", { ascending: false });
       return data ?? [];
+    },
+    enabled: !!user,
+  });
+
+  const { data: wallet } = useQuery({
+    queryKey: ["wallet", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("wallets").select("balance_paise").eq("user_id", user!.id).maybeSingle();
+      return data;
     },
     enabled: !!user,
   });
@@ -57,20 +70,74 @@ function CheckoutPage() {
 
   async function handlePlaceOrder() {
     if (!user || !selectedAddressId) return;
+
+    if (paymentMethod === "cod") {
+      setPlacing(true);
+      setError(null);
+      const result = await placeCodOrderFn({
+        data: { userId: user.id, addressId: selectedAddressId, lines, couponCode: couponCode || undefined, useWallet },
+      });
+      setPlacing(false);
+      if (!result.ok) { setError(result.error); return; }
+      clearCart();
+      navigate({ to: "/account" });
+      return;
+    }
+
+    // Razorpay flow
     setPlacing(true);
     setError(null);
-    const result = await placeCodOrderFn({
-      data: {
-        userId: user.id,
-        addressId: selectedAddressId,
-        lines,
-        couponCode: couponCode || undefined,
-      },
+
+    const initResult = await initiateRazorpayCheckoutFn({
+      data: { userId: user.id, addressId: selectedAddressId, lines, couponCode: couponCode || undefined, useWallet },
     });
-    setPlacing(false);
-    if (!result.ok) { setError(result.error); return; }
-    clearCart();
-    navigate({ to: "/account" });
+
+    if (!initResult.ok) {
+      setPlacing(false);
+      setError(initResult.error);
+      return;
+    }
+
+    try {
+      await loadRazorpayScript();
+    } catch {
+      setPlacing(false);
+      setError("Could not load the payment window — please check your connection and try again.");
+      return;
+    }
+
+    const razorpay = new (window as any).Razorpay({
+      key: initResult.keyId,
+      amount: initResult.amountPaise,
+      currency: "INR",
+      name: "Giftty",
+      description: `Order #${initResult.orderNumber}`,
+      order_id: initResult.razorpayOrderId,
+      handler: async (response: any) => {
+        const verifyResult = await verifyRazorpayPaymentFn({
+          data: {
+            orderId: initResult.orderId,
+            razorpayOrderId: response.razorpay_order_id,
+            razorpayPaymentId: response.razorpay_payment_id,
+            razorpaySignature: response.razorpay_signature,
+          },
+        });
+        setPlacing(false);
+        if (!verifyResult.ok) {
+          setError(verifyResult.error);
+          return;
+        }
+        clearCart();
+        navigate({ to: "/account" });
+      },
+      modal: {
+        ondismiss: () => setPlacing(false),
+      },
+      prefill: { email: user.email ?? "" },
+      theme: { color: "#7A1F2B" },
+    });
+
+    razorpay.open();
   }
 
   if (sessionLoading) return null;
@@ -142,12 +209,27 @@ function CheckoutPage() {
         />
       </div>
 
+      {wallet && wallet.balance_paise > 0 && (
+        <div className="mb-8">
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input type="checkbox" checked={useWallet} onChange={(e) => setUseWallet(e.target.checked)} />
+            Use wallet balance (₹{(wallet.balance_paise / 100).toLocaleString("en-IN")} available)
+          </label>
+        </div>
+      )}
+
       <div className="mb-6">
         <h2 className="font-medium text-gray-900 mb-3">Payment Method</h2>
-        <div className="border border-maroon rounded-xl p-3 text-sm bg-cream/40">
-          Cash on Delivery — pay when your order arrives.
+        <div className="space-y-2">
+          <label className={`flex items-center gap-2 border rounded-xl p-3 text-sm cursor-pointer ${paymentMethod === "razorpay" ? "border-maroon bg-cream/40" : "border-gray-200"}`}>
+            <input type="radio" name="payment" checked={paymentMethod === "razorpay"} onChange={() => setPaymentMethod("razorpay")} />
+            Pay Online — UPI, Card, Net Banking (Razorpay)
+          </label>
+          <label className={`flex items-center gap-2 border rounded-xl p-3 text-sm cursor-pointer ${paymentMethod === "cod" ? "border-maroon bg-cream/40" : "border-gray-200"}`}>
+            <input type="radio" name="payment" checked={paymentMethod === "cod"} onChange={() => setPaymentMethod("cod")} />
+            Cash on Delivery
+          </label>
         </div>
-        <p className="text-xs text-gray-400 mt-2">Online payment (Razorpay) coming soon.</p>
       </div>
 
       {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
@@ -157,7 +239,7 @@ function CheckoutPage() {
         onClick={handlePlaceOrder}
         className="w-full bg-maroon text-white rounded-lg py-3 font-medium hover:bg-maroon-dark disabled:opacity-40 disabled:cursor-not-allowed transition"
       >
-        {placing ? "Placing order…" : "Place Order (COD)"}
+        {placing ? "Processing…" : paymentMethod === "cod" ? "Place Order (COD)" : "Pay Now"}
       </button>
     </div>
   );

@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase-client";
 import { useSession } from "@/lib/use-session";
 
@@ -12,6 +13,10 @@ function formatINR(paise: number) {
 function AccountPage() {
   const { user, loading: sessionLoading } = useSession();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [birthday, setBirthday] = useState("");
+  const [birthdayOptIn, setBirthdayOptIn] = useState(false);
+  const [savingBirthday, setSavingBirthday] = useState(false);
 
   const { data: orders } = useQuery({
     queryKey: ["my-orders", user?.id],
@@ -30,6 +35,30 @@ function AccountPage() {
     },
     enabled: !!user,
   });
+
+  const { data: wallet } = useQuery({
+    queryKey: ["my-wallet", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("wallets").select("balance_paise").eq("user_id", user!.id).maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  useEffect(() => {
+    if (profile) {
+      setBirthday(profile.birthday ?? "");
+      setBirthdayOptIn(profile.birthday_reminder_opt_in ?? false);
+    }
+  }, [profile]);
+
+  async function handleSaveBirthday() {
+    if (!user) return;
+    setSavingBirthday(true);
+    await supabase.from("profiles").update({ birthday: birthday || null, birthday_reminder_opt_in: birthdayOptIn }).eq("id", user.id);
+    setSavingBirthday(false);
+    queryClient.invalidateQueries({ queryKey: ["my-profile", user.id] });
+  }
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -69,10 +98,32 @@ function AccountPage() {
         </button>
       </div>
 
+      {wallet && wallet.balance_paise > 0 && (
+        <div className="border border-gold/30 bg-cream/40 rounded-xl p-4 mb-6 flex items-center justify-between">
+          <span className="text-sm text-gray-700">Wallet balance</span>
+          <span className="font-semibold text-maroon">{formatINR(wallet.balance_paise)}</span>
+        </div>
+      )}
+
+      <div className="border border-gray-100 rounded-xl p-4 mb-6">
+        <p className="text-sm font-medium text-gray-900 mb-2">Birthday reminder</p>
+        <div className="flex items-center gap-3">
+          <input type="date" value={birthday} onChange={(e) => setBirthday(e.target.value)} className="border rounded-lg px-3 py-2 text-sm" />
+          <label className="flex items-center gap-2 text-sm text-gray-600">
+            <input type="checkbox" checked={birthdayOptIn} onChange={(e) => setBirthdayOptIn(e.target.checked)} />
+            Remind me
+          </label>
+          <button onClick={handleSaveBirthday} disabled={savingBirthday} className="text-sm text-maroon hover:underline disabled:opacity-40">
+            {savingBirthday ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </div>
+
       <div className="flex gap-6 text-sm text-gray-500 border-b border-gray-100 mb-6">
         <span className="pb-2 border-b-2 border-maroon text-maroon font-medium">Orders</span>
         <Link to="/wishlist" className="pb-2 hover:text-maroon">Wishlist</Link>
         <Link to="/notifications" className="pb-2 hover:text-maroon">Notifications</Link>
+        <Link to="/account/referrals" className="pb-2 hover:text-maroon">Refer a Friend</Link>
       </div>
 
       {orders?.length === 0 && (

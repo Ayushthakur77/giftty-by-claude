@@ -1,14 +1,18 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { z } from "zod";
 import { supabase } from "@/lib/supabase-client";
 import { signUpSchema } from "@/lib/auth-schemas";
+import { recordReferralSignupFn } from "@/lib/referral.functions";
 
 export const Route = createFileRoute("/auth/sign-up")({
+  validateSearch: z.object({ ref: z.string().optional() }),
   component: SignUpPage,
 });
 
 function SignUpPage() {
   const navigate = useNavigate();
+  const { ref } = Route.useSearch();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,7 +31,7 @@ function SignUpPage() {
     }
 
     setLoading(true);
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: parsed.data.email,
       password: parsed.data.password,
       options: {
@@ -41,6 +45,12 @@ function SignUpPage() {
       // Generic message — never confirm/deny whether an email already exists.
       setError("Could not create account. Please check your details and try again.");
       return;
+    }
+
+    if (ref && signUpData.user) {
+      recordReferralSignupFn({ data: { referralCode: ref, newUserId: signUpData.user.id } }).catch(() => {
+        // Non-critical — a failed referral record shouldn't block account creation.
+      });
     }
 
     navigate({ to: "/account" });
