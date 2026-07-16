@@ -44,6 +44,7 @@ import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
 import { Route as AdminCouponsRouteImport } from './routes/admin.coupons'
 import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
+import { Route as AdminAiLogsRouteImport } from './routes/admin.ai-logs'
 import { Route as AccountReferralsRouteImport } from './routes/account.referrals'
 import { Route as ApiCronBirthdayRemindersRouteImport } from './routes/api.cron.birthday-reminders'
 
@@ -222,6 +223,11 @@ const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
   path: '/categories',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAiLogsRoute = AdminAiLogsRouteImport.update({
+  id: '/ai-logs',
+  path: '/ai-logs',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AccountReferralsRoute = AccountReferralsRouteImport.update({
   id: '/referrals',
   path: '/referrals',
@@ -249,6 +255,7 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/wishlist': typeof WishlistRoute
   '/account/referrals': typeof AccountReferralsRoute
+  '/admin/ai-logs': typeof AdminAiLogsRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/coupons': typeof AdminCouponsRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -288,6 +295,7 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/wishlist': typeof WishlistRoute
   '/account/referrals': typeof AccountReferralsRoute
+  '/admin/ai-logs': typeof AdminAiLogsRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/coupons': typeof AdminCouponsRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -328,6 +336,7 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/wishlist': typeof WishlistRoute
   '/account/referrals': typeof AccountReferralsRoute
+  '/admin/ai-logs': typeof AdminAiLogsRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/coupons': typeof AdminCouponsRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -369,6 +378,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/wishlist'
     | '/account/referrals'
+    | '/admin/ai-logs'
     | '/admin/categories'
     | '/admin/coupons'
     | '/admin/customers'
@@ -408,6 +418,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/wishlist'
     | '/account/referrals'
+    | '/admin/ai-logs'
     | '/admin/categories'
     | '/admin/coupons'
     | '/admin/customers'
@@ -447,6 +458,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/wishlist'
     | '/account/referrals'
+    | '/admin/ai-logs'
     | '/admin/categories'
     | '/admin/coupons'
     | '/admin/customers'
@@ -745,6 +757,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCategoriesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/ai-logs': {
+      id: '/admin/ai-logs'
+      path: '/ai-logs'
+      fullPath: '/admin/ai-logs'
+      preLoaderRoute: typeof AdminAiLogsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/account/referrals': {
       id: '/account/referrals'
       path: '/referrals'
@@ -774,6 +793,7 @@ const AccountRouteWithChildren =
   AccountRoute._addFileChildren(AccountRouteChildren)
 
 interface AdminRouteChildren {
+  AdminAiLogsRoute: typeof AdminAiLogsRoute
   AdminCategoriesRoute: typeof AdminCategoriesRoute
   AdminCouponsRoute: typeof AdminCouponsRoute
   AdminCustomersRoute: typeof AdminCustomersRoute
@@ -790,6 +810,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAiLogsRoute: AdminAiLogsRoute,
   AdminCategoriesRoute: AdminCategoriesRoute,
   AdminCouponsRoute: AdminCouponsRoute,
   AdminCustomersRoute: AdminCustomersRoute,

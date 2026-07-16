@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate, useLocation } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useIsSuperAdmin } from "@/lib/use-role";
-import { LayoutDashboard, Package, FolderTree, Gift, PackageOpen, ClipboardList, Ticket, Truck, Star, Users, BarChart3, Settings, LayoutTemplate } from "lucide-react";
+import { LayoutDashboard, Package, FolderTree, Gift, PackageOpen, ClipboardList, Ticket, Truck, Star, Users, BarChart3, Settings, LayoutTemplate, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({ component: AdminLayout });
 
@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { to: "/admin/customers" as const, label: "Customers", icon: Users },
   { to: "/admin/reports" as const, label: "Reports", icon: BarChart3 },
   { to: "/admin/homepage" as const, label: "Homepage", icon: LayoutTemplate },
+  { to: "/admin/ai-logs" as const, label: "AI Logs", icon: Sparkles },
   { to: "/admin/settings" as const, label: "Store Settings", icon: Settings },
 ];
 

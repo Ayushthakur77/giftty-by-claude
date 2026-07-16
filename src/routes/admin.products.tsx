@@ -29,7 +29,7 @@ type ProductForm = {
 };
 
 const EMPTY_FORM: ProductForm = {
-  name: "", category_id: "", price: "", stock: "0", short_description: "",
+  name: "", category_id: "", price: "", stock: "10", short_description: "",
   status: "active", is_gift_builder_compatible: false, images: [],
 };
 
