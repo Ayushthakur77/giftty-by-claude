@@ -3,10 +3,11 @@
  *
  * Server-only: GEMINI_API_KEY never leaves the server. The client sends a
  * natural-language request; this function fetches a real, current snapshot
- * of active products from the database, asks Gemini to pick relevant ones
- * (structured JSON output), then re-verifies every picked product is still
- * real/active/in-stock before returning it — Gemini's picks are advisory,
- * never trusted blindly as final product data.
+ * of active products, ready-made gift boxes, AND empty gift boxes from the
+ * database, asks Gemini to pick relevant ones across all three (structured
+ * JSON output), then re-verifies every picked ID is still real/active/
+ * in-stock before returning it — Gemini's picks are advisory, never trusted
+ * blindly as final data.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -21,14 +22,12 @@ const geminiResponseSchema = {
   type: "object",
   properties: {
     reasoning: { type: "string", description: "One short friendly sentence explaining the picks" },
-    productIds: {
-      type: "array",
-      items: { type: "string" },
-      description: "Up to 6 product IDs from the candidate list that best match the request",
-    },
+    productIds: { type: "array", items: { type: "string" }, description: "Up to 4 matching product ids" },
+    readyBoxIds: { type: "array", items: { type: "string" }, description: "Up to 3 matching ready-made gift box ids" },
+    emptyBoxIds: { type: "array", items: { type: "string" }, description: "Up to 2 matching empty/build-your-own gift box ids, if the request suggests a custom box would suit better" },
     suggestedGreeting: { type: "string", description: "A short, warm gift note (max 200 characters) matching the occasion" },
   },
-  required: ["reasoning", "productIds", "suggestedGreeting"],
+  required: ["reasoning", "productIds", "readyBoxIds", "emptyBoxIds", "suggestedGreeting"],
 };
 
 export const getAiGiftRecommendationFn = createServerFn({ method: "POST" })
@@ -36,71 +35,75 @@ export const getAiGiftRecommendationFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return { ok: false as const, error: "AI Gift Finder is not configured yet. Please try again later." };
+      return { ok: false as const, error: "AI Gift Finder is not configured yet — GEMINI_API_KEY is missing." };
     }
 
-    // Rate limit: max 15 AI requests per user (or IP-less bucket) per hour.
     const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    const { count } = await supabaseAdmin
-      .from("ai_logs")
-      .select("id", { count: "exact", head: true })
-      .eq("feature", "gift_recommendation")
-      .gte("created_at", since)
-      .eq("user_id", data.userId ?? "00000000-0000-0000-0000-000000000000");
 
-    if (data.userId && (count ?? 0) >= 15) {
+    // Run everything independent in parallel to stay well under the
+    // serverless function time limit.
+    const [rateLimitRes, productsRes, readyBoxesRes, emptyBoxesRes] = await Promise.all([
+      supabaseAdmin
+        .from("ai_logs")
+        .select("id", { count: "exact", head: true })
+        .eq("feature", "gift_recommendation")
+        .gte("created_at", since)
+        .eq("user_id", data.userId ?? "00000000-0000-0000-0000-000000000000"),
+      supabaseAdmin
+        .from("products")
+        .select("id, name, slug, short_description, long_description, price_paise, stock, is_personalization_enabled, categories(name)")
+        .eq("status", "active")
+        .limit(60),
+      supabaseAdmin
+        .from("ready_gift_boxes")
+        .select("id, name, slug, description, price_paise, stock")
+        .eq("status", "active")
+        .eq("visible", true)
+        .limit(20),
+      supabaseAdmin
+        .from("empty_gift_boxes")
+        .select("id, name, slug, description, base_price_paise, capacity, stock")
+        .eq("status", "active")
+        .eq("visible", true)
+        .limit(15),
+    ]);
+
+    if (data.userId && (rateLimitRes.count ?? 0) >= 15) {
       return { ok: false as const, error: "You've reached the AI request limit for now — please try again in a bit." };
     }
 
-    // Fetch a real, current candidate set with FULL product detail — name,
-    // both descriptions, category, and personalization options — so the AI
-    // can reason with everything the admin entered when creating the product,
-    // not just a short summary.
-    const { data: candidates, error: candidatesError } = await supabaseAdmin
-      .from("products")
-      .select("id, name, slug, short_description, long_description, price_paise, stock, is_gift_builder_compatible, is_personalization_enabled, categories(name)")
-      .eq("status", "active")
-      .limit(80);
+    const products = (productsRes.data ?? []).filter((p) => p.stock > 0);
+    const readyBoxes = (readyBoxesRes.data ?? []).filter((b) => b.stock > 0);
+    const emptyBoxes = (emptyBoxesRes.data ?? []).filter((b) => b.stock > 0);
 
-    if (candidatesError) {
-      return { ok: false as const, error: `Could not load products: ${candidatesError.message}` };
+    if (products.length === 0 && readyBoxes.length === 0 && emptyBoxes.length === 0) {
+      return { ok: false as const, error: "No in-stock products or gift boxes yet — add some from the Admin panel first." };
     }
 
-    const inStockCandidates = (candidates ?? []).filter((c) => c.stock > 0);
-
-    if (inStockCandidates.length === 0) {
-      return {
-        ok: false as const,
-        error: (candidates?.length ?? 0) > 0
-          ? "All current products are out of stock — add stock to at least one product in Admin → Products."
-          : "No active products yet — add some from Admin → Products first.",
-      };
-    }
-
-    const candidateList = inStockCandidates
-      .map((p: any) => {
-        const parts = [
-          `id:${p.id}`,
-          p.name,
-          `₹${p.price_paise / 100}`,
-          p.categories?.name ?? "uncategorized",
-          p.short_description ?? "",
-          p.long_description ?? "",
-          p.is_personalization_enabled ? "(personalizable)" : "",
-        ].filter(Boolean);
-        return `- ${parts.join(" | ")}`;
-      })
+    const productLines = products
+      .map((p: any) => `- id:${p.id} | PRODUCT | ${p.name} | ₹${p.price_paise / 100} | ${p.categories?.name ?? "uncategorized"} | ${p.short_description ?? ""} | ${p.long_description ?? ""}${p.is_personalization_enabled ? " | (personalizable)" : ""}`)
+      .join("\n");
+    const readyBoxLines = readyBoxes
+      .map((b) => `- id:${b.id} | READY_GIFT_BOX | ${b.name} | ₹${b.price_paise / 100} | ${b.description ?? ""}`)
+      .join("\n");
+    const emptyBoxLines = emptyBoxes
+      .map((b) => `- id:${b.id} | BUILD_YOUR_OWN_BOX | ${b.name} | from ₹${b.base_price_paise / 100} | fits ${b.capacity} items | ${b.description ?? ""}`)
       .join("\n");
 
     const prompt = `You are a gift recommendation assistant for an Indian gifting store called Giftty.
 A customer says: "${data.query}"
 
-Here is the current product catalog (id | name | price | category | short description | long description | personalization flag):
-${candidateList}
+Here is the current catalog. Each line is one item: id | TYPE | name | price | details.
 
-Pick up to 6 product IDs from this EXACT list (only use ids that appear above) that best match the customer's request (occasion, recipient, budget, interests if mentioned). Use both the short and long description to judge fit, not just the name. Also write one short warm sentence explaining your picks, and a short gift note/greeting message (max 200 characters) suited to the occasion.`;
+${productLines}
+${readyBoxLines}
+${emptyBoxLines}
 
-    let aiResult: { reasoning: string; productIds: string[]; suggestedGreeting: string };
+TYPE meanings: PRODUCT = a single item. READY_GIFT_BOX = a pre-curated gift box, ready to buy as-is. BUILD_YOUR_OWN_BOX = an empty box the customer would personally fill with products themselves (only suggest this if the customer seems to want to build something custom/personal).
+
+Pick matching ids from the EXACT ids listed above only, split into productIds, readyBoxIds, and emptyBoxIds. Use both short and long descriptions to judge fit, not just the name. Write one short warm sentence explaining your picks, and a short gift note/greeting message (max 200 characters) suited to the occasion.`;
+
+    let aiResult: { reasoning: string; productIds: string[]; readyBoxIds: string[]; emptyBoxIds: string[]; suggestedGreeting: string };
     let lastErrorDetail = "";
     try {
       const response = await fetch(
@@ -110,11 +113,7 @@ Pick up to 6 product IDs from this EXACT list (only use ids that appear above) t
           headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              responseMimeType: "application/json",
-              responseSchema: geminiResponseSchema,
-              temperature: 0.4,
-            },
+            generationConfig: { responseMimeType: "application/json", responseSchema: geminiResponseSchema, temperature: 0.4 },
           }),
         }
       );
@@ -144,10 +143,14 @@ Pick up to 6 product IDs from this EXACT list (only use ids that appear above) t
       return { ok: false as const, error: `AI assistant error: ${(lastErrorDetail || message).slice(0, 200)}` };
     }
 
-    // Re-verify picked IDs are real, currently-active, in-stock candidates —
-    // never trust the AI's output as final product data.
-    const validIds = new Set(inStockCandidates.map((c) => c.id));
-    const matchedProducts = inStockCandidates.filter((c) => aiResult.productIds.includes(c.id) && validIds.has(c.id));
+    // Re-verify every picked id against the real, current candidate sets.
+    const productMap = new Map(products.map((p) => [p.id, p]));
+    const readyBoxMap = new Map(readyBoxes.map((b) => [b.id, b]));
+    const emptyBoxMap = new Map(emptyBoxes.map((b) => [b.id, b]));
+
+    const matchedProducts = aiResult.productIds.map((id) => productMap.get(id)).filter(Boolean) as typeof products;
+    const matchedReadyBoxes = aiResult.readyBoxIds.map((id) => readyBoxMap.get(id)).filter(Boolean) as typeof readyBoxes;
+    const matchedEmptyBoxes = aiResult.emptyBoxIds.map((id) => emptyBoxMap.get(id)).filter(Boolean) as typeof emptyBoxes;
 
     await supabaseAdmin.from("ai_logs").insert({
       user_id: data.userId ?? null,
@@ -160,12 +163,8 @@ Pick up to 6 product IDs from this EXACT list (only use ids that appear above) t
       ok: true as const,
       reasoning: aiResult.reasoning,
       suggestedGreeting: aiResult.suggestedGreeting,
-      products: matchedProducts.map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        slug: p.slug,
-        pricePaise: p.price_paise,
-        categoryName: p.categories?.name ?? null,
-      })),
+      products: matchedProducts.map((p: any) => ({ id: p.id, name: p.name, slug: p.slug, pricePaise: p.price_paise, categoryName: p.categories?.name ?? null })),
+      readyBoxes: matchedReadyBoxes.map((b: any) => ({ id: b.id, name: b.name, slug: b.slug, pricePaise: b.price_paise })),
+      emptyBoxes: matchedEmptyBoxes.map((b: any) => ({ id: b.id, name: b.name, slug: b.slug, basePricePaise: b.base_price_paise })),
     };
   });
