@@ -1,14 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase-client";
 import { useSession } from "@/lib/use-session";
 import { useCartStore } from "@/lib/cart-store";
-import { placeCodOrderFn } from "@/lib/checkout.functions";
+import { placeCodOrderFn, previewOrderTotalsFn } from "@/lib/checkout.functions";
 import { initiateRazorpayCheckoutFn, verifyRazorpayPaymentFn } from "@/lib/payments.functions";
 import { loadRazorpayScript } from "@/lib/razorpay";
 
 export const Route = createFileRoute("/checkout")({ component: CheckoutPage });
+
+function formatINR(paise: number) {
+  return `₹${(paise / 100).toLocaleString("en-IN")}`;
+}
 
 const INDIAN_STATES = [
   "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat",
@@ -53,6 +57,22 @@ function CheckoutPage() {
       return data;
     },
     enabled: !!user,
+  });
+
+  // Debounce the coupon code so we don't fire a preview request on every keystroke.
+  const [debouncedCoupon, setDebouncedCoupon] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedCoupon(couponCode), 500);
+    return () => clearTimeout(t);
+  }, [couponCode]);
+
+  const { data: preview, isFetching: previewLoading } = useQuery({
+    queryKey: ["order-preview", user?.id, selectedAddressId, lines, debouncedCoupon, useWallet],
+    queryFn: () =>
+      previewOrderTotalsFn({
+        data: { userId: user!.id, addressId: selectedAddressId!, lines, couponCode: debouncedCoupon || undefined, useWallet },
+      }),
+    enabled: !!user && !!selectedAddressId && lines.length > 0,
   });
 
   async function handleSaveAddress() {
@@ -232,10 +252,51 @@ function CheckoutPage() {
         </div>
       </div>
 
+      <div className="mb-6">
+        <h2 className="font-medium text-gray-900 mb-3">Order Summary</h2>
+        {!selectedAddressId && <p className="text-sm text-gray-400">Select an address to see your total.</p>}
+        {selectedAddressId && previewLoading && !preview && <p className="text-sm text-gray-400">Calculating…</p>}
+        {selectedAddressId && preview && !preview.ok && <p className="text-sm text-red-600">{preview.error}</p>}
+        {selectedAddressId && preview && preview.ok && (
+          <div className="border border-gray-100 rounded-xl p-4 text-sm space-y-2">
+            <div className="space-y-1 pb-2 border-b border-gray-100">
+              {preview.lines.map((l, i) => (
+                <div key={i} className="flex justify-between text-gray-600">
+                  <span>{l.description} {l.quantity > 1 ? `× ${l.quantity}` : ""}</span>
+                  <span>{formatINR(l.linePaise)}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-between text-gray-600">
+              <span>Subtotal</span><span>{formatINR(preview.subtotalPaise)}</span>
+            </div>
+            {preview.discountPaise > 0 && (
+              <div className="flex justify-between text-green-600">
+                <span>Coupon discount</span><span>-{formatINR(preview.discountPaise)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-gray-600">
+              <span>Shipping</span><span>{preview.shippingPaise === 0 ? "Free" : formatINR(preview.shippingPaise)}</span>
+            </div>
+            <div className="flex justify-between text-gray-600">
+              <span>GST ({preview.taxPercent}%)</span><span>{formatINR(preview.taxPaise)}</span>
+            </div>
+            {preview.walletUsedPaise > 0 && (
+              <div className="flex justify-between text-green-600">
+                <span>Wallet applied</span><span>-{formatINR(preview.walletUsedPaise)}</span>
+              </div>
+            )}
+            <div className="flex justify-between font-semibold text-maroon text-base pt-2 border-t border-gray-100">
+              <span>Total to pay</span><span>{formatINR(preview.totalPaise)}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
       {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
 
       <button
-        disabled={!selectedAddressId || placing}
+        disabled={!selectedAddressId || placing || !preview?.ok}
         onClick={handlePlaceOrder}
         className="w-full bg-maroon text-white rounded-lg py-3 font-medium hover:bg-maroon-dark disabled:opacity-40 disabled:cursor-not-allowed transition"
       >

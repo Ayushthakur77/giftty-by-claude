@@ -42,6 +42,84 @@ export const cartLineSchema = z.union([
   }),
 ]);
 
+const previewInput = z.object({
+  userId: z.string().uuid(),
+  addressId: z.string().uuid(),
+  lines: z.array(cartLineSchema).min(1).max(50),
+  couponCode: z.string().min(2).max(30).optional(),
+  useWallet: z.boolean().optional(),
+});
+
+/**
+ * Read-only preview of the full bill (subtotal, per-line breakdown, discount,
+ * shipping, tax, wallet applied, grand total) — shown to the customer at
+ * checkout BEFORE they commit to pay. Uses the exact same pricing engine as
+ * the real order-placement functions, so the number shown here always
+ * matches what actually gets charged.
+ */
+export const previewOrderTotalsFn = createServerFn({ method: "POST" })
+  .validator((d: unknown) => previewInput.parse(d))
+  .handler(async ({ data }) => {
+    const { data: addr } = await supabaseAdmin
+      .from("addresses")
+      .select("*")
+      .eq("id", data.addressId)
+      .eq("user_id", data.userId)
+      .maybeSingle();
+    if (!addr) return { ok: false as const, error: "Address not found" };
+
+    const lines = data.lines as CartLine[];
+    const snap = await loadCatalogSnapshot(lines);
+    const priced = priceCart(lines, snap);
+    if (priced.hasErrors) {
+      const firstError = priced.lines.find((l) => l.error)?.error ?? "Some items could not be priced";
+      return { ok: false as const, error: firstError };
+    }
+
+    const deliveryCharges = await loadDeliveryCharges();
+    const shippingResult = computeShipping(addr.state, priced.subtotalPaise, deliveryCharges);
+    if (shippingResult.error) return { ok: false as const, error: shippingResult.error };
+
+    let discountPaise = 0;
+    if (data.couponCode) {
+      const { data: coupon } = await supabaseAdmin
+        .from("coupons")
+        .select("*")
+        .eq("code", data.couponCode.toUpperCase())
+        .eq("status", "active")
+        .maybeSingle();
+      if (coupon && priced.subtotalPaise >= coupon.min_order_paise) {
+        discountPaise =
+          coupon.discount_type === "flat"
+            ? coupon.discount_value
+            : Math.min(Math.round((priced.subtotalPaise * coupon.discount_value) / 100), coupon.max_discount_paise ?? Number.MAX_SAFE_INTEGER);
+      }
+    }
+
+    const taxPaise = computeTax(priced.subtotalPaise - discountPaise, 18);
+    let totalPaise = priced.subtotalPaise - discountPaise + shippingResult.shippingPaise + taxPaise;
+
+    let walletUsedPaise = 0;
+    if (data.useWallet) {
+      const { data: wallet } = await supabaseAdmin.from("wallets").select("balance_paise").eq("user_id", data.userId).maybeSingle();
+      const available = wallet?.balance_paise ?? 0;
+      walletUsedPaise = Math.min(available, totalPaise);
+      totalPaise -= walletUsedPaise;
+    }
+
+    return {
+      ok: true as const,
+      lines: priced.lines.map((l) => ({ description: l.descriptionSnapshot, quantity: l.quantity, unitPricePaise: l.unitPricePaise, linePaise: l.linePaise })),
+      subtotalPaise: priced.subtotalPaise,
+      discountPaise,
+      shippingPaise: shippingResult.shippingPaise,
+      taxPaise,
+      taxPercent: 18,
+      walletUsedPaise,
+      totalPaise,
+    };
+  });
+
 const placeCodOrderInput = z.object({
   userId: z.string().uuid(),
   addressId: z.string().uuid(),

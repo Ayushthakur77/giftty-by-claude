@@ -47,12 +47,36 @@ function AdminOrdersPage() {
   const { data: detailOrder } = useQuery({
     queryKey: ["admin-order-detail", detailOrderId],
     queryFn: async () => {
-      const [order, items, history] = await Promise.all([
+      const [order, itemsRes, history] = await Promise.all([
         supabase.from("orders").select("*, addresses(*)").eq("id", detailOrderId!).single(),
         supabase.from("order_items").select("*").eq("order_id", detailOrderId!),
         supabase.from("order_status_history").select("*").eq("order_id", detailOrderId!).order("created_at"),
       ]);
-      return { order: order.data, items: items.data ?? [], history: history.data ?? [] };
+
+      const items = itemsRes.data ?? [];
+      const productIds = items.filter((i) => i.item_type === "product" && i.product_id).map((i) => i.product_id!);
+      const readyBoxIds = items.filter((i) => i.item_type === "ready_box" && i.ready_box_id).map((i) => i.ready_box_id!);
+      const emptyBoxIds = items
+        .filter((i) => i.item_type === "custom_box" && i.empty_box_id)
+        .map((i) => i.empty_box_id!);
+
+      const [productsRes, readyBoxesRes, emptyBoxesRes] = await Promise.all([
+        productIds.length ? supabase.from("products").select("id, images").in("id", productIds) : Promise.resolve({ data: [] }),
+        readyBoxIds.length ? supabase.from("ready_gift_boxes").select("id, images").in("id", readyBoxIds) : Promise.resolve({ data: [] }),
+        emptyBoxIds.length ? supabase.from("empty_gift_boxes").select("id, images").in("id", emptyBoxIds) : Promise.resolve({ data: [] }),
+      ]);
+
+      const imageMap = new Map<string, string | null>();
+      for (const p of productsRes.data ?? []) imageMap.set(p.id, Array.isArray(p.images) && p.images[0] ? (p.images[0] as string) : null);
+      for (const b of readyBoxesRes.data ?? []) imageMap.set(b.id, Array.isArray(b.images) && b.images[0] ? (b.images[0] as string) : null);
+      for (const b of emptyBoxesRes.data ?? []) imageMap.set(b.id, Array.isArray(b.images) && b.images[0] ? (b.images[0] as string) : null);
+
+      const itemsWithImages = items.map((it) => ({
+        ...it,
+        image: imageMap.get(it.product_id ?? it.ready_box_id ?? it.empty_box_id ?? "") ?? null,
+      }));
+
+      return { order: order.data, items: itemsWithImages, history: history.data ?? [] };
     },
     enabled: !!detailOrderId,
   });
@@ -149,9 +173,23 @@ function AdminOrdersPage() {
             </div>
             <div>
               <p className="font-medium text-gray-900 mb-1">Items</p>
-              <ul className="text-gray-600 space-y-1">
+              <ul className="text-gray-600 space-y-2">
                 {detailOrder.items.map((it: any) => (
-                  <li key={it.id}>• {it.name_snapshot} × {it.quantity} — {formatINR(it.line_total_paise)}</li>
+                  <li key={it.id} className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-lg bg-gray-50 overflow-hidden shrink-0 border border-gray-100">
+                      {it.image ? <img src={it.image} alt="" className="w-full h-full object-cover" /> : null}
+                    </div>
+                    <div className="flex-1">
+                      <span>{it.name_snapshot} × {it.quantity}</span>
+                      <span className={`ml-2 text-xs px-1.5 py-0.5 rounded ${
+                        it.item_type === "product" ? "bg-blue-50 text-blue-600" :
+                        it.item_type === "ready_box" ? "bg-purple-50 text-purple-600" : "bg-amber-50 text-amber-600"
+                      }`}>
+                        {it.item_type === "product" ? "Product" : it.item_type === "ready_box" ? "Ready Box" : "Custom Box"}
+                      </span>
+                    </div>
+                    <span>{formatINR(it.line_total_paise)}</span>
+                  </li>
                 ))}
               </ul>
             </div>

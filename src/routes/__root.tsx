@@ -4,6 +4,7 @@ import { useState } from "react";
 import appCss from "@/styles/app.css?url";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -31,10 +32,11 @@ function RootComponent() {
         <QueryClientProvider client={queryClient}>
           <div className="flex flex-col min-h-screen">
             <Header />
-            <main className="flex-1">
+            <main className="flex-1 pb-16 md:pb-0">
               <Outlet />
             </main>
             <Footer />
+            <MobileBottomNav />
           </div>
         </QueryClientProvider>
         <Scripts />

@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { Sparkles } from "lucide-react";
 import { listCategories, listProducts, listReadyBoxes } from "@/lib/public-catalog";
 import { supabase } from "@/lib/supabase-client";
 
@@ -210,6 +211,23 @@ function HomePage() {
           )}
         </section>
       )}
+
+      {/* Small AI Finder CTA */}
+      <section className="max-w-7xl mx-auto px-4 pb-12">
+        <Link
+          to="/ai-finder"
+          className="flex items-center justify-between gap-4 bg-cream border border-gold/30 rounded-xl px-5 py-4 hover:border-gold transition"
+        >
+          <div className="flex items-center gap-3">
+            <Sparkles className="w-5 h-5 text-maroon shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-gray-900">Not sure what to gift?</p>
+              <p className="text-xs text-gray-500">Ask our AI — tell us the occasion and budget, we'll find it for you.</p>
+            </div>
+          </div>
+          <span className="text-sm text-maroon font-medium shrink-0">Try AI Finder →</span>
+        </Link>
+      </section>
     </div>
   );
 }
