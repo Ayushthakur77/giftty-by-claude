@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 
 export function Footer() {
   return (
-    <footer className="bg-cream border-t border-gray-100 mt-16">
+    <footer className="bg-mint-light border-t border-mint-dark/30 mt-16">
       <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-2 md:grid-cols-5 gap-8 text-sm">
         <div>
           <span className="font-script text-2xl text-maroon">Giftty</span>

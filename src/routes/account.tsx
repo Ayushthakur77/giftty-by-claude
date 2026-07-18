@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase-client";
 import { useSession } from "@/lib/use-session";
 import { useIsSuperAdmin } from "@/lib/use-role";
 import { Modal } from "@/components/Modal";
+import { cancelOrderFn } from "@/lib/orders.functions";
 
 export const Route = createFileRoute("/account")({ component: AccountPage });
 
@@ -21,6 +22,8 @@ function AccountPage() {
   const [birthdayOptIn, setBirthdayOptIn] = useState(false);
   const [savingBirthday, setSavingBirthday] = useState(false);
   const [detailOrderId, setDetailOrderId] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelMessage, setCancelMessage] = useState<string | null>(null);
 
   const { data: orders } = useQuery({
     queryKey: ["my-orders", user?.id],
@@ -34,10 +37,11 @@ function AccountPage() {
   const { data: detailOrder } = useQuery({
     queryKey: ["my-order-detail", detailOrderId],
     queryFn: async () => {
-      const [order, itemsRes, invoiceRes] = await Promise.all([
+      const [order, itemsRes, invoiceRes, historyRes] = await Promise.all([
         supabase.from("orders").select("*, addresses(*)").eq("id", detailOrderId!).single(),
         supabase.from("order_items").select("*").eq("order_id", detailOrderId!),
         supabase.from("invoices").select("*").eq("order_id", detailOrderId!).maybeSingle(),
+        supabase.from("order_status_history").select("*").eq("order_id", detailOrderId!).order("created_at"),
       ]);
 
       const items = itemsRes.data ?? [];
@@ -55,7 +59,7 @@ function AccountPage() {
 
       const itemsWithImages = items.map((it) => ({ ...it, image: imageMap.get(it.product_id ?? it.ready_box_id ?? "") ?? null }));
 
-      return { order: order.data, items: itemsWithImages, invoice: invoiceRes.data };
+      return { order: order.data, items: itemsWithImages, invoice: invoiceRes.data, history: historyRes.data ?? [] };
     },
     enabled: !!detailOrderId,
   });
@@ -91,6 +95,23 @@ function AccountPage() {
     await supabase.from("profiles").update({ birthday: birthday || null, birthday_reminder_opt_in: birthdayOptIn }).eq("id", user.id);
     setSavingBirthday(false);
     queryClient.invalidateQueries({ queryKey: ["my-profile", user.id] });
+  }
+
+  async function handleCancelOrder() {
+    if (!user || !detailOrderId) return;
+    if (!confirm("Cancel this order? This cannot be undone.")) return;
+    setCancelling(true);
+    setCancelMessage(null);
+    const result = await cancelOrderFn({ data: { orderId: detailOrderId, userId: user.id } });
+    setCancelling(false);
+    if (result.ok) {
+      setCancelMessage(result.message);
+      queryClient.invalidateQueries({ queryKey: ["my-order-detail", detailOrderId] });
+      queryClient.invalidateQueries({ queryKey: ["my-orders", user.id] });
+      queryClient.invalidateQueries({ queryKey: ["my-wallet", user.id] });
+    } else {
+      setCancelMessage(result.error);
+    }
   }
 
   async function handleSignOut() {
@@ -216,9 +237,32 @@ function AccountPage() {
         </div>
       )}
 
-      <Modal open={!!detailOrderId} onOpenChange={(o) => !o && setDetailOrderId(null)} title={`Order #${detailOrder?.order?.order_number ?? ""}`}>
+      <Modal open={!!detailOrderId} onOpenChange={(o) => { if (!o) { setDetailOrderId(null); setCancelMessage(null); } }} title={`Order #${detailOrder?.order?.order_number ?? ""}`}>
         {detailOrder?.order && (
           <div className="space-y-4 text-sm">
+            <div>
+              <p className="font-medium text-gray-900 mb-2">Order Status</p>
+              <div className="flex items-center gap-1">
+                {["pending", "confirmed", "shipped", "delivered"].map((s, i) => {
+                  const statusOrder = ["pending", "confirmed", "shipped", "delivered"];
+                  const currentIdx = statusOrder.indexOf(detailOrder.order.status);
+                  const reached = detailOrder.order.status !== "cancelled" && currentIdx >= i;
+                  return (
+                    <div key={s} className="flex-1 flex items-center">
+                      <div className={`w-3 h-3 rounded-full shrink-0 ${reached ? "bg-maroon" : "bg-gray-200"}`} />
+                      {i < 3 && <div className={`flex-1 h-0.5 ${reached && currentIdx > i ? "bg-maroon" : "bg-gray-200"}`} />}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex justify-between text-xs text-gray-400 mt-1">
+                <span>Placed</span><span>Confirmed</span><span>Shipped</span><span>Delivered</span>
+              </div>
+              {detailOrder.order.status === "cancelled" && (
+                <p className="text-red-600 text-xs mt-2">This order was cancelled{detailOrder.order.cancel_reason ? `: ${detailOrder.order.cancel_reason}` : "."}</p>
+              )}
+            </div>
+
             <div>
               <p className="font-medium text-gray-900 mb-1">Items</p>
               <ul className="space-y-2">
@@ -245,14 +289,33 @@ function AccountPage() {
               )}
               <p className="flex justify-between font-semibold text-maroon text-base pt-1"><span>Total paid</span><span>{formatINR(detailOrder.order.total_paise)}</span></p>
             </div>
-            {detailOrder.invoice && (
-              <p className="text-xs text-gray-400">Invoice: {detailOrder.invoice.invoice_number}</p>
-            )}
+
             <div>
               <p className="font-medium text-gray-900 mb-1">Delivery Address</p>
               <p className="text-gray-600 text-xs">
                 {detailOrder.order.addresses?.full_name}, {detailOrder.order.addresses?.line1}, {detailOrder.order.addresses?.city}, {detailOrder.order.addresses?.state} — {detailOrder.order.addresses?.postal_code}
               </p>
+            </div>
+
+            {cancelMessage && <p className="text-sm text-gray-700 bg-cream/60 border border-gold/30 rounded-lg p-3">{cancelMessage}</p>}
+
+            <div className="flex gap-2 pt-2">
+              <Link
+                to="/account/orders/$orderId/invoice"
+                params={{ orderId: detailOrder.order.id }}
+                className="flex-1 text-center border border-gray-300 rounded-lg py-2 text-sm hover:border-maroon hover:text-maroon transition"
+              >
+                Download Invoice
+              </Link>
+              {["pending", "confirmed"].includes(detailOrder.order.status) && (
+                <button
+                  onClick={handleCancelOrder}
+                  disabled={cancelling}
+                  className="flex-1 border border-red-200 text-red-600 rounded-lg py-2 text-sm hover:bg-red-50 disabled:opacity-40 transition"
+                >
+                  {cancelling ? "Cancelling…" : "Cancel Order"}
+                </button>
+              )}
             </div>
           </div>
         )}

@@ -17,6 +17,11 @@ export default {
           light: "#E5C868",
         },
         cream: "#F5EDE4",
+        mint: {
+          DEFAULT: "#A8E6CF",
+          light: "#D4F5E9",
+          dark: "#6FCBA3",
+        },
       },
       fontFamily: {
         script: ["'Dancing Script'", "cursive"],

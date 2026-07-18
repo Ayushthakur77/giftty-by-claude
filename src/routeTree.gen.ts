@@ -47,6 +47,7 @@ import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 import { Route as AdminAiLogsRouteImport } from './routes/admin.ai-logs'
 import { Route as AccountReferralsRouteImport } from './routes/account.referrals'
 import { Route as ApiCronBirthdayRemindersRouteImport } from './routes/api.cron.birthday-reminders'
+import { Route as AccountOrdersOrderIdInvoiceRouteImport } from './routes/account.orders.$orderId.invoice'
 
 const WishlistRoute = WishlistRouteImport.update({
   id: '/wishlist',
@@ -239,6 +240,12 @@ const ApiCronBirthdayRemindersRoute =
     path: '/api/cron/birthday-reminders',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AccountOrdersOrderIdInvoiceRoute =
+  AccountOrdersOrderIdInvoiceRouteImport.update({
+    id: '/orders/$orderId/invoice',
+    path: '/orders/$orderId/invoice',
+    getParentRoute: () => AccountRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -279,6 +286,7 @@ export interface FileRoutesByFullPath {
   '/legal/terms': typeof LegalTermsRoute
   '/p/$slug': typeof PSlugRoute
   '/api/cron/birthday-reminders': typeof ApiCronBirthdayRemindersRoute
+  '/account/orders/$orderId/invoice': typeof AccountOrdersOrderIdInvoiceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -319,6 +327,7 @@ export interface FileRoutesByTo {
   '/legal/terms': typeof LegalTermsRoute
   '/p/$slug': typeof PSlugRoute
   '/api/cron/birthday-reminders': typeof ApiCronBirthdayRemindersRoute
+  '/account/orders/$orderId/invoice': typeof AccountOrdersOrderIdInvoiceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -360,6 +369,7 @@ export interface FileRoutesById {
   '/legal/terms': typeof LegalTermsRoute
   '/p/$slug': typeof PSlugRoute
   '/api/cron/birthday-reminders': typeof ApiCronBirthdayRemindersRoute
+  '/account/orders/$orderId/invoice': typeof AccountOrdersOrderIdInvoiceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -402,6 +412,7 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/p/$slug'
     | '/api/cron/birthday-reminders'
+    | '/account/orders/$orderId/invoice'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -442,6 +453,7 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/p/$slug'
     | '/api/cron/birthday-reminders'
+    | '/account/orders/$orderId/invoice'
   id:
     | '__root__'
     | '/'
@@ -482,6 +494,7 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/p/$slug'
     | '/api/cron/birthday-reminders'
+    | '/account/orders/$orderId/invoice'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -778,15 +791,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCronBirthdayRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/account/orders/$orderId/invoice': {
+      id: '/account/orders/$orderId/invoice'
+      path: '/orders/$orderId/invoice'
+      fullPath: '/account/orders/$orderId/invoice'
+      preLoaderRoute: typeof AccountOrdersOrderIdInvoiceRouteImport
+      parentRoute: typeof AccountRoute
+    }
   }
 }
 
 interface AccountRouteChildren {
   AccountReferralsRoute: typeof AccountReferralsRoute
+  AccountOrdersOrderIdInvoiceRoute: typeof AccountOrdersOrderIdInvoiceRoute
 }
 
 const AccountRouteChildren: AccountRouteChildren = {
   AccountReferralsRoute: AccountReferralsRoute,
+  AccountOrdersOrderIdInvoiceRoute: AccountOrdersOrderIdInvoiceRoute,
 }
 
 const AccountRouteWithChildren =
