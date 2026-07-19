@@ -20,9 +20,9 @@ const EXAMPLE_PROMPTS = [
 type Result = {
   reasoning: string;
   suggestedGreeting: string;
-  products: { id: string; name: string; slug: string; pricePaise: number; categoryName: string | null }[];
-  readyBoxes: { id: string; name: string; slug: string; pricePaise: number }[];
-  emptyBoxes: { id: string; name: string; slug: string; basePricePaise: number }[];
+  products: { id: string; name: string; slug: string; image: string | null; pricePaise: number; categoryName: string | null }[];
+  readyBoxes: { id: string; name: string; slug: string; image: string | null; pricePaise: number }[];
+  emptyBoxes: { id: string; name: string; slug: string; image: string | null; basePricePaise: number }[];
 };
 
 function AiFinderPage() {
@@ -104,13 +104,20 @@ function AiFinderPage() {
               <h2 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Products</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {result.products.map((p) => (
-                  <div key={p.id} className="border border-gray-100 rounded-xl p-3">
+                  <div key={p.id} className="border border-gray-100 rounded-xl overflow-hidden">
                     <Link to="/p/$slug" params={{ slug: p.slug }} className="block">
-                      <p className="text-sm text-gray-800 line-clamp-2">{p.name}</p>
-                      <p className="text-xs text-gray-400">{p.categoryName}</p>
-                      <p className="font-semibold text-maroon mt-1">{formatINR(p.pricePaise)}</p>
+                      <div className="aspect-square bg-gray-50">
+                        {p.image ? <img src={p.image} alt={p.name} className="w-full h-full object-cover" /> : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">No image</div>
+                        )}
+                      </div>
+                      <div className="p-3">
+                        <p className="text-sm text-gray-800 line-clamp-2">{p.name}</p>
+                        <p className="text-xs text-gray-400">{p.categoryName}</p>
+                        <p className="font-semibold text-maroon mt-1">{formatINR(p.pricePaise)}</p>
+                      </div>
                     </Link>
-                    <button onClick={() => addLine({ type: "product", productId: p.id, quantity: 1 })} className="mt-2 w-full text-xs bg-maroon text-white rounded-lg py-2 hover:bg-maroon-dark transition">
+                    <button onClick={() => addLine({ type: "product", productId: p.id, quantity: 1 })} className="w-full text-xs bg-maroon text-white py-2 hover:bg-maroon-dark transition">
                       Add to Cart
                     </button>
                   </div>
@@ -124,12 +131,19 @@ function AiFinderPage() {
               <h2 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Ready-made Gift Boxes</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {result.readyBoxes.map((b) => (
-                  <div key={b.id} className="border border-gray-100 rounded-xl p-3">
+                  <div key={b.id} className="border border-gray-100 rounded-xl overflow-hidden">
                     <Link to="/box/$slug" params={{ slug: b.slug }} className="block">
-                      <p className="text-sm text-gray-800 line-clamp-2">{b.name}</p>
-                      <p className="font-semibold text-maroon mt-1">{formatINR(b.pricePaise)}</p>
+                      <div className="aspect-square bg-gray-50">
+                        {b.image ? <img src={b.image} alt={b.name} className="w-full h-full object-cover" /> : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">No image</div>
+                        )}
+                      </div>
+                      <div className="p-3">
+                        <p className="text-sm text-gray-800 line-clamp-2">{b.name}</p>
+                        <p className="font-semibold text-maroon mt-1">{formatINR(b.pricePaise)}</p>
+                      </div>
                     </Link>
-                    <button onClick={() => addLine({ type: "ready_box", readyBoxId: b.id, quantity: 1 })} className="mt-2 w-full text-xs bg-maroon text-white rounded-lg py-2 hover:bg-maroon-dark transition">
+                    <button onClick={() => addLine({ type: "ready_box", readyBoxId: b.id, quantity: 1 })} className="w-full text-xs bg-maroon text-white py-2 hover:bg-maroon-dark transition">
                       Add to Cart
                     </button>
                   </div>
@@ -143,10 +157,17 @@ function AiFinderPage() {
               <h2 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Build Your Own Box</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {result.emptyBoxes.map((b) => (
-                  <Link key={b.id} to="/gift-box" className="border border-gray-100 rounded-xl p-3 block hover:border-maroon transition">
-                    <p className="text-sm text-gray-800 line-clamp-2">{b.name}</p>
-                    <p className="font-semibold text-maroon mt-1">from {formatINR(b.basePricePaise)}</p>
-                    <p className="text-xs text-maroon mt-2">Start building →</p>
+                  <Link key={b.id} to="/gift-box" className="border border-gray-100 rounded-xl overflow-hidden block hover:border-maroon transition">
+                    <div className="aspect-square bg-gray-50">
+                      {b.image ? <img src={b.image} alt={b.name} className="w-full h-full object-cover" /> : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">No image</div>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <p className="text-sm text-gray-800 line-clamp-2">{b.name}</p>
+                      <p className="font-semibold text-maroon mt-1">from {formatINR(b.basePricePaise)}</p>
+                      <p className="text-xs text-maroon mt-2">Start building →</p>
+                    </div>
                   </Link>
                 ))}
               </div>

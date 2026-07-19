@@ -1,10 +1,10 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, LayoutGrid, User, ShoppingBag } from "lucide-react";
+import { Home, Search, User, ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/lib/cart-store";
 
 const TABS = [
   { to: "/" as const, label: "Home", icon: Home },
-  { to: "/gift-boxes" as const, label: "Categories", icon: LayoutGrid },
+  { to: "/search" as const, label: "Search", icon: Search },
   { to: "/account" as const, label: "Account", icon: User },
   { to: "/cart" as const, label: "Cart", icon: ShoppingBag },
 ];

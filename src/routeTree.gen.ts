@@ -45,9 +45,9 @@ import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
 import { Route as AdminCouponsRouteImport } from './routes/admin.coupons'
 import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 import { Route as AdminAiLogsRouteImport } from './routes/admin.ai-logs'
-import { Route as AccountReferralsRouteImport } from './routes/account.referrals'
+import { Route as AccountReferralsRouteImport } from './routes/account_.referrals'
 import { Route as ApiCronBirthdayRemindersRouteImport } from './routes/api.cron.birthday-reminders'
-import { Route as AccountOrdersOrderIdInvoiceRouteImport } from './routes/account.orders.$orderId.invoice'
+import { Route as AccountOrdersOrderIdInvoiceRouteImport } from './routes/account_.orders.$orderId.invoice'
 
 const WishlistRoute = WishlistRouteImport.update({
   id: '/wishlist',
@@ -230,9 +230,9 @@ const AdminAiLogsRoute = AdminAiLogsRouteImport.update({
   getParentRoute: () => AdminRoute,
 } as any)
 const AccountReferralsRoute = AccountReferralsRouteImport.update({
-  id: '/referrals',
-  path: '/referrals',
-  getParentRoute: () => AccountRoute,
+  id: '/account_/referrals',
+  path: '/account/referrals',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiCronBirthdayRemindersRoute =
   ApiCronBirthdayRemindersRouteImport.update({
@@ -242,15 +242,15 @@ const ApiCronBirthdayRemindersRoute =
   } as any)
 const AccountOrdersOrderIdInvoiceRoute =
   AccountOrdersOrderIdInvoiceRouteImport.update({
-    id: '/orders/$orderId/invoice',
-    path: '/orders/$orderId/invoice',
-    getParentRoute: () => AccountRoute,
+    id: '/account_/orders/$orderId/invoice',
+    path: '/account/orders/$orderId/invoice',
+    getParentRoute: () => rootRouteImport,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/account': typeof AccountRouteWithChildren
+  '/account': typeof AccountRoute
   '/admin': typeof AdminRouteWithChildren
   '/ai-finder': typeof AiFinderRoute
   '/cart': typeof CartRoute
@@ -291,7 +291,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/account': typeof AccountRouteWithChildren
+  '/account': typeof AccountRoute
   '/admin': typeof AdminRouteWithChildren
   '/ai-finder': typeof AiFinderRoute
   '/cart': typeof CartRoute
@@ -333,7 +333,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/account': typeof AccountRouteWithChildren
+  '/account': typeof AccountRoute
   '/admin': typeof AdminRouteWithChildren
   '/ai-finder': typeof AiFinderRoute
   '/cart': typeof CartRoute
@@ -344,7 +344,7 @@ export interface FileRoutesById {
   '/notifications': typeof NotificationsRoute
   '/search': typeof SearchRoute
   '/wishlist': typeof WishlistRoute
-  '/account/referrals': typeof AccountReferralsRoute
+  '/account_/referrals': typeof AccountReferralsRoute
   '/admin/ai-logs': typeof AdminAiLogsRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/coupons': typeof AdminCouponsRoute
@@ -369,7 +369,7 @@ export interface FileRoutesById {
   '/legal/terms': typeof LegalTermsRoute
   '/p/$slug': typeof PSlugRoute
   '/api/cron/birthday-reminders': typeof ApiCronBirthdayRemindersRoute
-  '/account/orders/$orderId/invoice': typeof AccountOrdersOrderIdInvoiceRoute
+  '/account_/orders/$orderId/invoice': typeof AccountOrdersOrderIdInvoiceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -469,7 +469,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/search'
     | '/wishlist'
-    | '/account/referrals'
+    | '/account_/referrals'
     | '/admin/ai-logs'
     | '/admin/categories'
     | '/admin/coupons'
@@ -494,13 +494,13 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/p/$slug'
     | '/api/cron/birthday-reminders'
-    | '/account/orders/$orderId/invoice'
+    | '/account_/orders/$orderId/invoice'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
-  AccountRoute: typeof AccountRouteWithChildren
+  AccountRoute: typeof AccountRoute
   AdminRoute: typeof AdminRouteWithChildren
   AiFinderRoute: typeof AiFinderRoute
   CartRoute: typeof CartRoute
@@ -511,6 +511,7 @@ export interface RootRouteChildren {
   NotificationsRoute: typeof NotificationsRoute
   SearchRoute: typeof SearchRoute
   WishlistRoute: typeof WishlistRoute
+  AccountReferralsRoute: typeof AccountReferralsRoute
   ApiRazorpayWebhookRoute: typeof ApiRazorpayWebhookRoute
   AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
   AuthSignInRoute: typeof AuthSignInRoute
@@ -521,6 +522,7 @@ export interface RootRouteChildren {
   LegalTermsRoute: typeof LegalTermsRoute
   PSlugRoute: typeof PSlugRoute
   ApiCronBirthdayRemindersRoute: typeof ApiCronBirthdayRemindersRoute
+  AccountOrdersOrderIdInvoiceRoute: typeof AccountOrdersOrderIdInvoiceRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -777,12 +779,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAiLogsRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/account/referrals': {
-      id: '/account/referrals'
-      path: '/referrals'
+    '/account_/referrals': {
+      id: '/account_/referrals'
+      path: '/account/referrals'
       fullPath: '/account/referrals'
       preLoaderRoute: typeof AccountReferralsRouteImport
-      parentRoute: typeof AccountRoute
+      parentRoute: typeof rootRouteImport
     }
     '/api/cron/birthday-reminders': {
       id: '/api/cron/birthday-reminders'
@@ -791,28 +793,15 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCronBirthdayRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/account/orders/$orderId/invoice': {
-      id: '/account/orders/$orderId/invoice'
-      path: '/orders/$orderId/invoice'
+    '/account_/orders/$orderId/invoice': {
+      id: '/account_/orders/$orderId/invoice'
+      path: '/account/orders/$orderId/invoice'
       fullPath: '/account/orders/$orderId/invoice'
       preLoaderRoute: typeof AccountOrdersOrderIdInvoiceRouteImport
-      parentRoute: typeof AccountRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
-
-interface AccountRouteChildren {
-  AccountReferralsRoute: typeof AccountReferralsRoute
-  AccountOrdersOrderIdInvoiceRoute: typeof AccountOrdersOrderIdInvoiceRoute
-}
-
-const AccountRouteChildren: AccountRouteChildren = {
-  AccountReferralsRoute: AccountReferralsRoute,
-  AccountOrdersOrderIdInvoiceRoute: AccountOrdersOrderIdInvoiceRoute,
-}
-
-const AccountRouteWithChildren =
-  AccountRoute._addFileChildren(AccountRouteChildren)
 
 interface AdminRouteChildren {
   AdminAiLogsRoute: typeof AdminAiLogsRoute
@@ -853,7 +842,7 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
-  AccountRoute: AccountRouteWithChildren,
+  AccountRoute: AccountRoute,
   AdminRoute: AdminRouteWithChildren,
   AiFinderRoute: AiFinderRoute,
   CartRoute: CartRoute,
@@ -864,6 +853,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotificationsRoute: NotificationsRoute,
   SearchRoute: SearchRoute,
   WishlistRoute: WishlistRoute,
+  AccountReferralsRoute: AccountReferralsRoute,
   ApiRazorpayWebhookRoute: ApiRazorpayWebhookRoute,
   AuthForgotPasswordRoute: AuthForgotPasswordRoute,
   AuthSignInRoute: AuthSignInRoute,
@@ -874,6 +864,7 @@ const rootRouteChildren: RootRouteChildren = {
   LegalTermsRoute: LegalTermsRoute,
   PSlugRoute: PSlugRoute,
   ApiCronBirthdayRemindersRoute: ApiCronBirthdayRemindersRoute,
+  AccountOrdersOrderIdInvoiceRoute: AccountOrdersOrderIdInvoiceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

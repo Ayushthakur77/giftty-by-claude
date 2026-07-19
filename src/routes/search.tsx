@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { z } from "zod";
 import { Search as SearchIcon } from "lucide-react";
-import { listProducts } from "@/lib/public-catalog";
+import { listProducts, listReadyBoxes } from "@/lib/public-catalog";
 
 export const Route = createFileRoute("/search")({
   validateSearch: z.object({ q: z.string().default("") }),
@@ -25,6 +25,13 @@ function SearchPage() {
   const { data: results, isLoading } = useQuery({
     queryKey: ["search", q],
     queryFn: () => listProducts(q ? { search: q } : {}),
+  });
+
+  // Only show ready-made boxes in "browse everything" mode (no active search term).
+  const { data: readyBoxes } = useQuery({
+    queryKey: ["search-ready-boxes"],
+    queryFn: listReadyBoxes,
+    enabled: !q,
   });
 
   function handleSearchSubmit(e: React.FormEvent) {
@@ -64,7 +71,7 @@ function SearchPage() {
       )}
 
       {!isLoading && results && results.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
           {results.map((p) => (
             <Link key={p.id} to="/p/$slug" params={{ slug: p.slug }} className="group rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition">
               <div className="aspect-square bg-gray-50">
@@ -80,6 +87,29 @@ function SearchPage() {
               </div>
             </Link>
           ))}
+        </div>
+      )}
+
+      {!q && readyBoxes && readyBoxes.length > 0 && (
+        <div>
+          <h2 className="font-heading text-lg font-bold text-gray-900 mb-4">Ready-made Gift Boxes</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {readyBoxes.map((b) => (
+              <Link key={b.id} to="/box/$slug" params={{ slug: b.slug }} className="group rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition">
+                <div className="aspect-square bg-gray-50">
+                  {Array.isArray(b.images) && b.images[0] ? (
+                    <img src={b.images[0] as string} alt={b.name} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-300">No image</div>
+                  )}
+                </div>
+                <div className="p-3">
+                  <p className="text-sm text-gray-800 line-clamp-2">{b.name}</p>
+                  <p className="font-semibold text-maroon mt-1">{formatINR(b.price_paise)}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       )}
     </div>

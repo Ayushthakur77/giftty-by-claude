@@ -1,9 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase-client";
 import { listEmptyBoxes, listGiftBuilderProducts, listRibbonsFillersCards } from "@/lib/public-catalog";
 import { useCartStore } from "@/lib/cart-store";
+import { getAiGreetingMessageFn } from "@/lib/ai.functions";
 
 export const Route = createFileRoute("/gift-box")({ component: GiftBoxBuilderPage });
 
@@ -12,6 +14,15 @@ function formatINR(paise: number) {
 }
 
 type Step = "box" | "products" | "extras" | "summary";
+type Tone = "heartfelt" | "funny" | "formal" | "romantic" | "short";
+
+const TONES: { value: Tone; label: string }[] = [
+  { value: "heartfelt", label: "Heartfelt" },
+  { value: "funny", label: "Funny" },
+  { value: "romantic", label: "Romantic" },
+  { value: "formal", label: "Formal" },
+  { value: "short", label: "Short & Sweet" },
+];
 
 function GiftBoxBuilderPage() {
   const navigate = useNavigate();
@@ -23,6 +34,23 @@ function GiftBoxBuilderPage() {
   const [fillerId, setFillerId] = useState<string | undefined>();
   const [cardId, setCardId] = useState<string | undefined>();
   const [giftNote, setGiftNote] = useState("");
+  const [aiContext, setAiContext] = useState("");
+  const [aiTone, setAiTone] = useState<Tone>("heartfelt");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  async function handleAiWrite() {
+    if (aiContext.trim().length < 3) return;
+    setAiLoading(true);
+    setAiError(null);
+    const res = await getAiGreetingMessageFn({ data: { context: aiContext.trim(), tone: aiTone } });
+    setAiLoading(false);
+    if (!res.ok) {
+      setAiError(res.error);
+      return;
+    }
+    setGiftNote(res.message);
+  }
 
   const { data: boxes } = useQuery({ queryKey: ["empty-boxes"], queryFn: listEmptyBoxes });
   const selectedBox = boxes?.find((b) => b.id === selectedBoxId);
@@ -199,8 +227,35 @@ function GiftBoxBuilderPage() {
           )}
           <div>
             <h3 className="font-medium text-gray-900 mb-2">Gift note</h3>
+
+            <div className="border border-gold/30 bg-cream/40 rounded-xl p-3 mb-3">
+              <p className="text-xs font-medium text-gray-600 mb-2 flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5 text-maroon" /> Not sure what to write? Let AI help.
+              </p>
+              <input
+                value={aiContext}
+                onChange={(e) => setAiContext(e.target.value)}
+                placeholder="Tell AI a bit about it — e.g. 'for my best friend's birthday, we've known each other 10 years'"
+                className="w-full border rounded-lg px-3 py-2 text-sm mb-2"
+              />
+              <div className="flex items-center gap-2 flex-wrap">
+                <select value={aiTone} onChange={(e) => setAiTone(e.target.value as Tone)} className="border rounded-lg px-2 py-1.5 text-xs">
+                  {TONES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
+                <button
+                  onClick={handleAiWrite}
+                  disabled={aiLoading || aiContext.trim().length < 3}
+                  className="bg-maroon text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-maroon-dark disabled:opacity-40 transition flex items-center gap-1"
+                >
+                  {aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                  Write it for me
+                </button>
+              </div>
+              {aiError && <p className="text-red-600 text-xs mt-2">{aiError}</p>}
+            </div>
+
             <textarea value={giftNote} onChange={(e) => setGiftNote(e.target.value)} maxLength={200} rows={3}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="Write a personal message…" />
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="Write a personal message… or use AI above" />
           </div>
           <div className="flex gap-3">
             <button onClick={() => setStep("products")} className="px-6 py-2 rounded-lg border border-gray-200 text-gray-600">Back</button>

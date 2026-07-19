@@ -30,6 +30,70 @@ const geminiResponseSchema = {
   required: ["reasoning", "productIds", "readyBoxIds", "emptyBoxIds", "suggestedGreeting"],
 };
 
+const greetingInput = z.object({
+  context: z.string().min(3).max(300),
+  tone: z.enum(["heartfelt", "funny", "formal", "romantic", "short"]),
+});
+
+/**
+ * AI Greeting/Gift-note writer, used in the Gift Box Builder. Given a short
+ * description of the occasion/recipient and a desired tone, returns a ready-
+ * to-use gift note the customer can edit before checkout.
+ */
+export const getAiGreetingMessageFn = createServerFn({ method: "POST" })
+  .validator((d: unknown) => greetingInput.parse(d))
+  .handler(async ({ data }) => {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) return { ok: false as const, error: "AI message writer is not configured yet." };
+
+    const toneDescriptions: Record<string, string> = {
+      heartfelt: "warm, sincere, and emotionally genuine",
+      funny: "lighthearted, playful, and a little funny",
+      formal: "polite, respectful, and formal",
+      romantic: "romantic and affectionate",
+      short: "very short and sweet, one line only",
+    };
+
+    const prompt = `Write a gift note/greeting card message for an Indian gifting store called Giftty.
+Context from the customer: "${data.context}"
+Desired tone: ${toneDescriptions[data.tone]}.
+Keep it under 200 characters. Return ONLY the message text, no quotes, no explanation.`;
+
+    try {
+      const response = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 100 },
+          }),
+        }
+      );
+      if (!response.ok) throw new Error(`Gemini API ${response.status}`);
+      const json = await response.json();
+      const text = json.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      if (!text) throw new Error("Empty response");
+
+      await supabaseAdmin.from("ai_logs").insert({ feature: "greeting_card", input_summary: data.context.slice(0, 200), success: true });
+
+      return { ok: true as const, message: text.replace(/^["']|["']$/g, "").slice(0, 200) };
+    } catch (err) {
+      await supabaseAdmin.from("ai_logs").insert({
+        feature: "greeting_card",
+        input_summary: data.context.slice(0, 200),
+        success: false,
+        error_message: err instanceof Error ? err.message : "Unknown error",
+      });
+      return { ok: false as const, error: "Could not generate a message right now — please try again." };
+    }
+  });
+
+/**
+ * AI Gift Finder — searches products, ready-made gift boxes, AND empty/
+ * build-your-own boxes based on a natural-language request.
+ */
 export const getAiGiftRecommendationFn = createServerFn({ method: "POST" })
   .validator((d: unknown) => recommendInput.parse(d))
   .handler(async ({ data }) => {
@@ -51,18 +115,18 @@ export const getAiGiftRecommendationFn = createServerFn({ method: "POST" })
         .eq("user_id", data.userId ?? "00000000-0000-0000-0000-000000000000"),
       supabaseAdmin
         .from("products")
-        .select("id, name, slug, short_description, long_description, price_paise, stock, is_personalization_enabled, categories(name)")
+        .select("id, name, slug, images, short_description, long_description, price_paise, stock, is_personalization_enabled, categories(name)")
         .eq("status", "active")
         .limit(60),
       supabaseAdmin
         .from("ready_gift_boxes")
-        .select("id, name, slug, description, price_paise, stock")
+        .select("id, name, slug, images, description, price_paise, stock")
         .eq("status", "active")
         .eq("visible", true)
         .limit(20),
       supabaseAdmin
         .from("empty_gift_boxes")
-        .select("id, name, slug, description, base_price_paise, capacity, stock")
+        .select("id, name, slug, images, description, base_price_paise, capacity, stock")
         .eq("status", "active")
         .eq("visible", true)
         .limit(15),
@@ -159,12 +223,16 @@ Pick matching ids from the EXACT ids listed above only, split into productIds, r
       success: true,
     });
 
+    function firstImage(images: unknown): string | null {
+      return Array.isArray(images) && images[0] ? (images[0] as string) : null;
+    }
+
     return {
       ok: true as const,
       reasoning: aiResult.reasoning,
       suggestedGreeting: aiResult.suggestedGreeting,
-      products: matchedProducts.map((p: any) => ({ id: p.id, name: p.name, slug: p.slug, pricePaise: p.price_paise, categoryName: p.categories?.name ?? null })),
-      readyBoxes: matchedReadyBoxes.map((b: any) => ({ id: b.id, name: b.name, slug: b.slug, pricePaise: b.price_paise })),
-      emptyBoxes: matchedEmptyBoxes.map((b: any) => ({ id: b.id, name: b.name, slug: b.slug, basePricePaise: b.base_price_paise })),
+      products: matchedProducts.map((p: any) => ({ id: p.id, name: p.name, slug: p.slug, image: firstImage(p.images), pricePaise: p.price_paise, categoryName: p.categories?.name ?? null })),
+      readyBoxes: matchedReadyBoxes.map((b: any) => ({ id: b.id, name: b.name, slug: b.slug, image: firstImage(b.images), pricePaise: b.price_paise })),
+      emptyBoxes: matchedEmptyBoxes.map((b: any) => ({ id: b.id, name: b.name, slug: b.slug, image: firstImage(b.images), basePricePaise: b.base_price_paise })),
     };
   });

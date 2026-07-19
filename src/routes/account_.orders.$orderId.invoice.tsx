@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { supabase } from "@/lib/supabase-client";
 import { useSession } from "@/lib/use-session";
 
-export const Route = createFileRoute("/account/orders/$orderId/invoice")({ component: InvoicePage });
+export const Route = createFileRoute("/account_/orders/$orderId/invoice")({ component: InvoicePage });
 
 function formatINR(paise: number) {
   return `₹${(paise / 100).toLocaleString("en-IN")}`;

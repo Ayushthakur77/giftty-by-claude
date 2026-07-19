@@ -6,7 +6,7 @@ import { getOrCreateReferralCodeFn } from "@/lib/referral.functions";
 import { supabase } from "@/lib/supabase-client";
 import { Copy, Check } from "lucide-react";
 
-export const Route = createFileRoute("/account/referrals")({ component: ReferralsPage });
+export const Route = createFileRoute("/account_/referrals")({ component: ReferralsPage });
 
 function ReferralsPage() {
   const { user, loading: sessionLoading } = useSession();
