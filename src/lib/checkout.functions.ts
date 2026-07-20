@@ -72,8 +72,13 @@ export const previewOrderTotalsFn = createServerFn({ method: "POST" })
     const snap = await loadCatalogSnapshot(lines);
     const priced = priceCart(lines, snap);
     if (priced.hasErrors) {
-      const firstError = priced.lines.find((l) => l.error)?.error ?? "Some items could not be priced";
-      return { ok: false as const, error: firstError };
+      return {
+        ok: false as const,
+        error: "Some items in your cart need attention before you can check out.",
+        lineErrors: priced.lines
+          .map((l, i) => ({ index: i, description: l.descriptionSnapshot, error: l.error }))
+          .filter((l) => l.error),
+      };
     }
 
     const deliveryCharges = await loadDeliveryCharges();

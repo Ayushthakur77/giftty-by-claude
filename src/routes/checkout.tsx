@@ -14,21 +14,13 @@ function formatINR(paise: number) {
   return `₹${(paise / 100).toLocaleString("en-IN")}`;
 }
 
-const INDIAN_STATES = [
-  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat",
-  "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh",
-  "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan",
-  "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
-  "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu",
-  "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry",
-];
-
 function CheckoutPage() {
   const navigate = useNavigate();
   const { user, loading: sessionLoading } = useSession();
   const queryClient = useQueryClient();
   const lines = useCartStore((s) => s.lines);
   const clearCart = useCartStore((s) => s.clear);
+  const removeLine = useCartStore((s) => s.removeLine);
 
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [showNewAddress, setShowNewAddress] = useState(false);
@@ -48,6 +40,17 @@ function CheckoutPage() {
       return data ?? [];
     },
     enabled: !!user,
+  });
+
+  // Only offer states the admin has actually enabled for delivery — matches
+  // what checkout will actually accept, so customers never fill out an
+  // address for a state that gets rejected at the last step.
+  const { data: serviceableStates } = useQuery({
+    queryKey: ["serviceable-states"],
+    queryFn: async () => {
+      const { data } = await supabase.from("delivery_charges").select("state").eq("is_serviceable", true).order("state");
+      return (data ?? []).map((d) => d.state);
+    },
   });
 
   const { data: wallet } = useQuery({
@@ -208,7 +211,7 @@ function CheckoutPage() {
             <input placeholder="City" value={newAddress.city} onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })} className="border rounded-lg px-3 py-2 text-sm" />
             <select value={newAddress.state} onChange={(e) => setNewAddress({ ...newAddress, state: e.target.value })} className="border rounded-lg px-3 py-2 text-sm">
               <option value="">Select state</option>
-              {INDIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+              {serviceableStates?.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
             <input placeholder="Postal code" value={newAddress.postal_code} onChange={(e) => setNewAddress({ ...newAddress, postal_code: e.target.value })} className="border rounded-lg px-3 py-2 text-sm col-span-2" />
             <div className="col-span-2 flex gap-2">
@@ -256,7 +259,26 @@ function CheckoutPage() {
         <h2 className="font-medium text-gray-900 mb-3">Order Summary</h2>
         {!selectedAddressId && <p className="text-sm text-gray-400">Select an address to see your total.</p>}
         {selectedAddressId && previewLoading && !preview && <p className="text-sm text-gray-400">Calculating…</p>}
-        {selectedAddressId && preview && !preview.ok && <p className="text-sm text-red-600">{preview.error}</p>}
+        {selectedAddressId && preview && !preview.ok && (
+          <div className="text-sm">
+            <p className="text-red-600 mb-2">{preview.error}</p>
+            {"lineErrors" in preview && preview.lineErrors && preview.lineErrors.length > 0 && (
+              <div className="space-y-2">
+                {preview.lineErrors.map((le) => (
+                  <div key={le.index} className="flex items-center justify-between border border-red-200 bg-red-50 rounded-lg px-3 py-2">
+                    <span className="text-gray-700">{le.description}: <span className="text-red-600">{le.error}</span></span>
+                    <button
+                      onClick={() => removeLine(le.index)}
+                      className="text-xs text-red-600 hover:underline shrink-0 ml-2"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         {selectedAddressId && preview && preview.ok && (
           <div className="border border-gray-100 rounded-xl p-4 text-sm space-y-2">
             <div className="space-y-1 pb-2 border-b border-gray-100">
