@@ -278,9 +278,11 @@ function CheckoutPage() {
             <div className="flex justify-between text-gray-600">
               <span>Shipping</span><span>{preview.shippingPaise === 0 ? "Free" : formatINR(preview.shippingPaise)}</span>
             </div>
-            <div className="flex justify-between text-gray-600">
-              <span>GST ({preview.taxPercent}%)</span><span>{formatINR(preview.taxPaise)}</span>
-            </div>
+            {preview.taxPaise > 0 && (
+              <div className="flex justify-between text-gray-600">
+                <span>GST ({preview.taxPercent}%)</span><span>{formatINR(preview.taxPaise)}</span>
+              </div>
+            )}
             {preview.walletUsedPaise > 0 && (
               <div className="flex justify-between text-green-600">
                 <span>Wallet applied</span><span>-{formatINR(preview.walletUsedPaise)}</span>

@@ -196,7 +196,9 @@ function AdminOrdersPage() {
             <div className="border-t border-gray-100 pt-2 space-y-1">
               <p className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>{formatINR(detailOrder.order.subtotal_paise)}</span></p>
               <p className="flex justify-between"><span className="text-gray-500">Shipping</span><span>{formatINR(detailOrder.order.shipping_paise)}</span></p>
-              <p className="flex justify-between"><span className="text-gray-500">Tax</span><span>{formatINR(detailOrder.order.tax_paise)}</span></p>
+              {detailOrder.order.tax_paise > 0 && (
+                <p className="flex justify-between"><span className="text-gray-500">Tax (GST)</span><span>{formatINR(detailOrder.order.tax_paise)}</span></p>
+              )}
               {detailOrder.order.discount_paise > 0 && (
                 <p className="flex justify-between text-green-600"><span>Discount</span><span>-{formatINR(detailOrder.order.discount_paise)}</span></p>
               )}

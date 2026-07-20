@@ -280,7 +280,9 @@ function AccountPage() {
             <div className="border-t border-gray-100 pt-2 space-y-1">
               <p className="flex justify-between text-gray-600"><span>Subtotal</span><span>{formatINR(detailOrder.order.subtotal_paise)}</span></p>
               <p className="flex justify-between text-gray-600"><span>Shipping</span><span>{formatINR(detailOrder.order.shipping_paise)}</span></p>
-              <p className="flex justify-between text-gray-600"><span>GST</span><span>{formatINR(detailOrder.order.tax_paise)}</span></p>
+              {detailOrder.order.tax_paise > 0 && (
+                <p className="flex justify-between text-gray-600"><span>GST</span><span>{formatINR(detailOrder.order.tax_paise)}</span></p>
+              )}
               {detailOrder.order.discount_paise > 0 && (
                 <p className="flex justify-between text-green-600"><span>Coupon discount</span><span>-{formatINR(detailOrder.order.discount_paise)}</span></p>
               )}

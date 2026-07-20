@@ -11,7 +11,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/server/supabase-admin.server";
-import { loadCatalogSnapshot, loadDeliveryCharges } from "@/server/catalog-repo.server";
+import { loadCatalogSnapshot, loadDeliveryCharges, loadGstSettings } from "@/server/catalog-repo.server";
 import { priceCart, computeShipping, computeTax } from "@/lib/pricing";
 import type { CartLine } from "@/lib/pricing";
 import { maybeRewardReferral } from "@/lib/referral.functions";
@@ -96,7 +96,8 @@ export const previewOrderTotalsFn = createServerFn({ method: "POST" })
       }
     }
 
-    const taxPaise = computeTax(priced.subtotalPaise - discountPaise, 18);
+    const gstSettings = await loadGstSettings();
+    const taxPaise = gstSettings.enabled ? computeTax(priced.subtotalPaise - discountPaise, gstSettings.percent) : 0;
     let totalPaise = priced.subtotalPaise - discountPaise + shippingResult.shippingPaise + taxPaise;
 
     let walletUsedPaise = 0;
@@ -114,7 +115,7 @@ export const previewOrderTotalsFn = createServerFn({ method: "POST" })
       discountPaise,
       shippingPaise: shippingResult.shippingPaise,
       taxPaise,
-      taxPercent: 18,
+      taxPercent: gstSettings.percent,
       walletUsedPaise,
       totalPaise,
     };
@@ -188,7 +189,8 @@ export const placeCodOrderFn = createServerFn({ method: "POST" })
       couponId = coupon.id;
     }
 
-    const taxPaise = computeTax(priced.subtotalPaise - discountPaise, 18);
+    const gstSettings = await loadGstSettings();
+    const taxPaise = gstSettings.enabled ? computeTax(priced.subtotalPaise - discountPaise, gstSettings.percent) : 0;
     let totalPaise = priced.subtotalPaise - discountPaise + shippingResult.shippingPaise + taxPaise;
 
     // 3b. Wallet — apply up to the available balance against the total.
@@ -308,7 +310,7 @@ export const placeCodOrderFn = createServerFn({ method: "POST" })
     await supabaseAdmin.from("order_status_history").insert({ order_id: order.id, status: "confirmed", note: "Order placed (COD)" });
 
     const invoiceNumber = `INV-${orderNumber}`;
-    await supabaseAdmin.from("invoices").insert({ order_id: order.id, invoice_number: invoiceNumber, gst_percent: 18 });
+    await supabaseAdmin.from("invoices").insert({ order_id: order.id, invoice_number: invoiceNumber, gst_percent: gstSettings.enabled ? gstSettings.percent : 0 });
 
     await supabaseAdmin.from("notifications").insert({
       user_id: data.userId,

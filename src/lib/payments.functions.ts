@@ -14,7 +14,7 @@ import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import crypto from "node:crypto";
 import { supabaseAdmin } from "@/server/supabase-admin.server";
-import { loadCatalogSnapshot, loadDeliveryCharges } from "@/server/catalog-repo.server";
+import { loadCatalogSnapshot, loadDeliveryCharges, loadGstSettings } from "@/server/catalog-repo.server";
 import { priceCart, computeShipping, computeTax } from "@/lib/pricing";
 import type { CartLine } from "@/lib/pricing";
 import { cartLineSchema, generateOrderNumber } from "@/lib/checkout.functions";
@@ -78,7 +78,8 @@ export const initiateRazorpayCheckoutFn = createServerFn({ method: "POST" })
       couponId = coupon.id;
     }
 
-    const taxPaise = computeTax(priced.subtotalPaise - discountPaise, 18);
+    const gstSettings = await loadGstSettings();
+    const taxPaise = gstSettings.enabled ? computeTax(priced.subtotalPaise - discountPaise, gstSettings.percent) : 0;
     let totalPaise = priced.subtotalPaise - discountPaise + shippingResult.shippingPaise + taxPaise;
 
     // Wallet is applied here as a discount toward the amount charged via Razorpay,
@@ -233,7 +234,8 @@ const confirmOrderPaid = createServerOnlyFn(async (orderId: string, razorpayPaym
   }
 
   const invoiceNumber = `INV-${order.order_number}`;
-  await supabaseAdmin.from("invoices").insert({ order_id: orderId, invoice_number: invoiceNumber, gst_percent: 18 });
+  const gstSettings = await loadGstSettings();
+  await supabaseAdmin.from("invoices").insert({ order_id: orderId, invoice_number: invoiceNumber, gst_percent: gstSettings.enabled ? gstSettings.percent : 0 });
 
   await supabaseAdmin.from("notifications").insert({
     user_id: order.user_id,

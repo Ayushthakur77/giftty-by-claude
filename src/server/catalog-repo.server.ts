@@ -156,3 +156,9 @@ export async function loadDeliveryCharges() {
     ])
   );
 }
+
+/** Loads the admin-controlled GST toggle + rate from store settings. */
+export async function loadGstSettings(): Promise<{ enabled: boolean; percent: number }> {
+  const { data } = await supabaseAdmin.from("store_settings").select("gst_enabled, gst_percent").eq("id", 1).maybeSingle();
+  return { enabled: data?.gst_enabled ?? true, percent: data?.gst_percent ?? 18 };
+}

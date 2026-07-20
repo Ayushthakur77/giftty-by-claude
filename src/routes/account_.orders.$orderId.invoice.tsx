@@ -35,6 +35,12 @@ function InvoicePage() {
   if (!data?.order) return <div className="max-w-2xl mx-auto px-4 py-12 text-gray-400">Loading…</div>;
 
   const { order, items, invoice, settings } = data;
+  const showGst = order.tax_paise > 0;
+
+  // QR code encodes this exact invoice page's URL — scanning it on another
+  // device opens the same invoice, which can then be saved/printed there too.
+  const invoiceUrl = typeof window !== "undefined" ? window.location.href : "";
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(invoiceUrl)}`;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-12 print:py-0">
@@ -61,10 +67,10 @@ function InvoicePage() {
         <div className="grid grid-cols-2 gap-6 mb-8 text-sm">
           <div>
             <p className="text-xs text-gray-400 uppercase mb-1">Billed to</p>
-            <p className="text-gray-800">{order.addresses?.full_name}</p>
+            <p className="text-gray-800 font-medium">{order.addresses?.full_name}</p>
             <p className="text-gray-600">{order.addresses?.line1}, {order.addresses?.city}</p>
             <p className="text-gray-600">{order.addresses?.state} — {order.addresses?.postal_code}</p>
-            <p className="text-gray-600">{order.addresses?.phone}</p>
+            <p className="text-gray-600">Phone: {order.addresses?.phone}</p>
           </div>
           <div>
             <p className="text-xs text-gray-400 uppercase mb-1">Order details</p>
@@ -95,14 +101,20 @@ function InvoicePage() {
           </tbody>
         </table>
 
-        <div className="flex justify-end">
+        <div className="flex justify-between items-end">
+          <div>
+            <img src={qrCodeUrl} alt="Scan to view this invoice" width={100} height={100} />
+            <p className="text-[10px] text-gray-400 mt-1 max-w-[100px]">Scan to view/download this invoice on another device</p>
+          </div>
           <div className="w-56 space-y-1 text-sm">
             <div className="flex justify-between text-gray-600"><span>Subtotal</span><span>{formatINR(order.subtotal_paise)}</span></div>
             {order.discount_paise > 0 && (
               <div className="flex justify-between text-green-600"><span>Discount</span><span>-{formatINR(order.discount_paise)}</span></div>
             )}
-            <div className="flex justify-between text-gray-600"><span>Shipping</span><span>{formatINR(order.shipping_paise)}</span></div>
-            <div className="flex justify-between text-gray-600"><span>GST ({invoice?.gst_percent ?? 18}%)</span><span>{formatINR(order.tax_paise)}</span></div>
+            <div className="flex justify-between text-gray-600"><span>Shipping</span><span>{order.shipping_paise === 0 ? "Free" : formatINR(order.shipping_paise)}</span></div>
+            {showGst && (
+              <div className="flex justify-between text-gray-600"><span>GST ({invoice?.gst_percent ?? 18}%)</span><span>{formatINR(order.tax_paise)}</span></div>
+            )}
             {order.wallet_used_paise > 0 && (
               <div className="flex justify-between text-green-600"><span>Wallet applied</span><span>-{formatINR(order.wallet_used_paise)}</span></div>
             )}

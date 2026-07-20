@@ -33,6 +33,7 @@ function AdminSettingsPage() {
       business_address: form.business_address,
       gst_number: form.gst_number,
       gst_percent: parseFloat(form.gst_percent),
+      gst_enabled: form.gst_enabled,
       instagram_url: form.instagram_url,
       facebook_url: form.facebook_url,
       maintenance_mode: form.maintenance_mode,
@@ -75,9 +76,13 @@ function AdminSettingsPage() {
           </div>
           <div>
             <label className="text-sm text-gray-600 block mb-1">GST %</label>
-            <input type="number" value={form.gst_percent ?? ""} onChange={(e) => setForm({ ...form, gst_percent: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
+            <input type="number" disabled={!form.gst_enabled} value={form.gst_percent ?? ""} onChange={(e) => setForm({ ...form, gst_percent: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-400" />
           </div>
         </div>
+        <label className="flex items-center gap-2 text-sm text-gray-600">
+          <input type="checkbox" checked={form.gst_enabled} onChange={(e) => setForm({ ...form, gst_enabled: e.target.checked })} />
+          Charge GST on orders (uncheck to remove GST from checkout and invoices entirely)
+        </label>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-sm text-gray-600 block mb-1">Instagram URL</label>
