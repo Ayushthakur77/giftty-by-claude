@@ -19,6 +19,12 @@ type CartStore = {
   clear: () => void;
 };
 
+function isValidLine(l: unknown): l is CartLine {
+  if (!l || typeof l !== "object") return false;
+  const type = (l as { type?: unknown }).type;
+  return type === "product" || type === "ready_box" || type === "custom_box";
+}
+
 export const useCartStore = create<CartStore>()(
   persist(
     (set) => ({
@@ -58,6 +64,26 @@ export const useCartStore = create<CartStore>()(
         }),
       clear: () => set({ lines: [] }),
     }),
-    { name: "giftty-cart" }
+    {
+      name: "giftty-cart",
+      // Bumping this version, combined with a validating merge below, means
+      // any cart data saved under an older/incompatible shape (from earlier
+      // schema iterations during development) is safely discarded instead
+      // of crashing the app on load — a malformed cart line reaching
+      // `.reduce()` in the Header's cart-count badge previously had the
+      // potential to throw during hydration and silently break the whole
+      // page for that one browser.
+      version: 2,
+      migrate: () => ({ lines: [] }),
+      merge: (persisted, current) => {
+        try {
+          const lines = (persisted as { lines?: unknown })?.lines;
+          if (!Array.isArray(lines)) return current;
+          return { ...current, lines: lines.filter(isValidLine) };
+        } catch {
+          return current;
+        }
+      },
+    }
   )
 );

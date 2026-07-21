@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase-client";
 import { useSession } from "@/lib/use-session";
+import { Barcode } from "@/components/Barcode";
 
 export const Route = createFileRoute("/account_/orders/$orderId/invoice")({ component: InvoicePage });
 
@@ -36,11 +37,6 @@ function InvoicePage() {
 
   const { order, items, invoice, settings } = data;
   const showGst = order.tax_paise > 0;
-
-  // QR code encodes this exact invoice page's URL — scanning it on another
-  // device opens the same invoice, which can then be saved/printed there too.
-  const invoiceUrl = typeof window !== "undefined" ? window.location.href : "";
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(invoiceUrl)}`;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-12 print:py-0">
@@ -103,8 +99,8 @@ function InvoicePage() {
 
         <div className="flex justify-between items-end">
           <div>
-            <img src={qrCodeUrl} alt="Scan to view this invoice" width={100} height={100} />
-            <p className="text-[10px] text-gray-400 mt-1 max-w-[100px]">Scan to view/download this invoice on another device</p>
+            <Barcode value={order.order_number} height={40} />
+            <p className="text-[10px] text-gray-400 mt-1 max-w-[160px]">For delivery reference — scan to identify this order.</p>
           </div>
           <div className="w-56 space-y-1 text-sm">
             <div className="flex justify-between text-gray-600"><span>Subtotal</span><span>{formatINR(order.subtotal_paise)}</span></div>

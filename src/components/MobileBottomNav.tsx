@@ -11,7 +11,7 @@ const TABS = [
 
 export function MobileBottomNav() {
   const location = useLocation();
-  const cartCount = useCartStore((s) => s.lines.reduce((sum, l) => sum + ("quantity" in l ? l.quantity : 1), 0));
+  const cartCount = useCartStore((s) => (Array.isArray(s.lines) ? s.lines : []).reduce((sum, l) => sum + ("quantity" in l ? l.quantity : 1), 0));
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-100 flex items-center justify-around py-2 pb-safe">

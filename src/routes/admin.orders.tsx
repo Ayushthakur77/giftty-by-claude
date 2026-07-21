@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase-client";
@@ -212,6 +212,13 @@ function AdminOrdersPage() {
                 ))}
               </ul>
             </div>
+            <Link
+              to="/account/orders/$orderId/invoice"
+              params={{ orderId: detailOrder.order.id }}
+              className="block text-center border border-gray-300 rounded-lg py-2 text-sm hover:border-maroon hover:text-maroon transition"
+            >
+              Download Invoice
+            </Link>
           </div>
         )}
       </Modal>

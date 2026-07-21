@@ -10,7 +10,7 @@ import { useIsSuperAdmin } from "@/lib/use-role";
 export function Header() {
   const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState("");
-  const cartCount = useCartStore((s) => s.lines.reduce((sum, l) => sum + ("quantity" in l ? l.quantity : 1), 0));
+  const cartCount = useCartStore((s) => (Array.isArray(s.lines) ? s.lines : []).reduce((sum, l) => sum + ("quantity" in l ? l.quantity : 1), 0));
   const { user } = useSession();
   const { isSuperAdmin } = useIsSuperAdmin();
 
