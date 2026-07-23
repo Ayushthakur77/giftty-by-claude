@@ -33,18 +33,47 @@ const geminiResponseSchema = {
 const greetingInput = z.object({
   context: z.string().min(3).max(300),
   tone: z.enum(["heartfelt", "funny", "formal", "romantic", "short"]),
+  userId: z.string().uuid().optional(),
 });
 
 /**
- * AI Greeting/Gift-note writer, used in the Gift Box Builder. Given a short
- * description of the occasion/recipient and a desired tone, returns a ready-
- * to-use gift note the customer can edit before checkout.
+ * AI Greeting/Gift-note writer, used in the Gift Box Builder (accessible to
+ * guests, not just signed-in users). Given a short description of the
+ * occasion/recipient and a desired tone, returns a ready-to-use gift note
+ * the customer can edit before checkout.
  */
 export const getAiGreetingMessageFn = createServerFn({ method: "POST" })
   .validator((d: unknown) => greetingInput.parse(d))
   .handler(async ({ data }) => {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) return { ok: false as const, error: "AI message writer is not configured yet." };
+
+    const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+
+    if (data.userId) {
+      // Signed-in users: 15/hour each, same as the gift recommendation limit.
+      const { count } = await supabaseAdmin
+        .from("ai_logs")
+        .select("id", { count: "exact", head: true })
+        .eq("feature", "greeting_card")
+        .eq("user_id", data.userId)
+        .gte("created_at", since);
+      if ((count ?? 0) >= 15) {
+        return { ok: false as const, error: "You've reached the AI request limit for now — please try again in a bit." };
+      }
+    } else {
+      // Guests (Gift Box Builder doesn't require login): a coarser global
+      // safety net so an anonymous script can't run up the Gemini bill.
+      const { count } = await supabaseAdmin
+        .from("ai_logs")
+        .select("id", { count: "exact", head: true })
+        .eq("feature", "greeting_card")
+        .is("user_id", null)
+        .gte("created_at", since);
+      if ((count ?? 0) >= 100) {
+        return { ok: false as const, error: "AI message writer is busy right now — please try again in a bit, or sign in for a higher limit." };
+      }
+    }
 
     const toneDescriptions: Record<string, string> = {
       heartfelt: "warm, sincere, and emotionally genuine",
@@ -76,11 +105,12 @@ Keep it under 200 characters. Return ONLY the message text, no quotes, no explan
       const text = json.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
       if (!text) throw new Error("Empty response");
 
-      await supabaseAdmin.from("ai_logs").insert({ feature: "greeting_card", input_summary: data.context.slice(0, 200), success: true });
+      await supabaseAdmin.from("ai_logs").insert({ user_id: data.userId ?? null, feature: "greeting_card", input_summary: data.context.slice(0, 200), success: true });
 
       return { ok: true as const, message: text.replace(/^["']|["']$/g, "").slice(0, 200) };
     } catch (err) {
       await supabaseAdmin.from("ai_logs").insert({
+        user_id: data.userId ?? null,
         feature: "greeting_card",
         input_summary: data.context.slice(0, 200),
         success: false,

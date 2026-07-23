@@ -17,17 +17,17 @@ function ProductCardSkeleton() {
 }
 
 function HomePage() {
-  const { data: categories, isLoading: categoriesLoading } = useQuery({
+  const { data: categories, isLoading: categoriesLoading, error: categoriesError } = useQuery({
     queryKey: ["categories", "homepage"],
     queryFn: listCategories,
   });
 
-  const { data: trending, isLoading: trendingLoading } = useQuery({
+  const { data: trending, isLoading: trendingLoading, error: trendingError } = useQuery({
     queryKey: ["products", "trending"],
     queryFn: () => listProducts({ sort: "newest", limit: 8 }),
   });
 
-  const { data: readyBoxes, isLoading: boxesLoading } = useQuery({
+  const { data: readyBoxes, isLoading: boxesLoading, error: boxesError } = useQuery({
     queryKey: ["ready-boxes", "homepage"],
     queryFn: listReadyBoxes,
   });
@@ -101,6 +101,9 @@ function HomePage() {
               No categories yet — add some from the Admin panel and they'll show up here automatically.
             </p>
           )}
+          {categoriesError && (
+            <p className="text-red-500 text-sm">Could not load categories — please refresh the page.</p>
+          )}
           {!categoriesLoading && categories && categories.length > 0 && (
             <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
               {categories.filter((c) => !c.parent_id).slice(0, 12).map((c) => (
@@ -144,6 +147,9 @@ function HomePage() {
               No ready-made boxes published yet — create one from Admin → Ready Boxes.
             </p>
           )}
+          {boxesError && (
+            <p className="text-red-500 text-sm">Could not load gift boxes — please refresh the page.</p>
+          )}
           {!boxesLoading && readyBoxes && readyBoxes.length > 0 && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {readyBoxes.slice(0, 4).map((b) => (
@@ -184,6 +190,9 @@ function HomePage() {
             <p className="text-gray-400 text-sm">
               No products yet — add some from Admin → Products and they'll show up here automatically.
             </p>
+          )}
+          {trendingError && (
+            <p className="text-red-500 text-sm">Could not load products — please refresh the page.</p>
           )}
           {!trendingLoading && trending && trending.length > 0 && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
