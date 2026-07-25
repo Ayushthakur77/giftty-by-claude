@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Sparkles, Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabase-client";
+import { supabasePublic as supabase } from "@/lib/supabase-public-client";
 import { listEmptyBoxes, listGiftBuilderProducts, listRibbonsFillersCards } from "@/lib/public-catalog";
 import { useCartStore } from "@/lib/cart-store";
 import { getAiGreetingMessageFn } from "@/lib/ai.functions";

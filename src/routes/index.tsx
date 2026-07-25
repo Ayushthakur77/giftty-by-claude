@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Sparkles } from "lucide-react";
 import { listCategories, listProducts, listReadyBoxes } from "@/lib/public-catalog";
-import { supabase } from "@/lib/supabase-client";
+import { supabasePublic as supabase } from "@/lib/supabase-public-client";
 
 export const Route = createFileRoute("/")({
   component: HomePage,

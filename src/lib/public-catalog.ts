@@ -5,7 +5,7 @@
  * consistent with the "one source of truth" principle: admin CRUD and
  * storefront reads use the exact same tables.
  */
-import { supabase } from "./supabase-client";
+import { supabasePublic as supabase } from "./supabase-public-client";
 
 export async function listProducts(opts: {
   categorySlug?: string;
