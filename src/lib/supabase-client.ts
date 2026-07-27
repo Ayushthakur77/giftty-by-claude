@@ -23,7 +23,38 @@ if (!url || !publishableKey) {
   );
 }
 
+// New-format Supabase keys (sb_publishable_..., sb_secret_...) are opaque
+// strings, NOT JWTs. supabase-js still defaults to sending them as
+// `Authorization: Bearer <key>` when there is no active session. PostgREST
+// tries to decode that header as a JWT, fails, and rejects the request —
+// which is why logged-out visitors saw no products/categories while logged
+// -in users (who have a real session JWT overriding that header) were fine.
+// Stripping the bogus Authorization header and relying on the `apikey`
+// header alone (which PostgREST accepts for anon-role requests) fixes this.
+function isNewSupabaseApiKey(value: string): boolean {
+  return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
+}
+
+function createSupabaseFetch(supabaseKey: string): typeof fetch {
+  return (input, init) => {
+    const headers = new Headers(
+      typeof Request !== "undefined" && input instanceof Request ? input.headers : undefined,
+    );
+    if (init?.headers) {
+      new Headers(init.headers).forEach((value, key) => headers.set(key, value));
+    }
+    if (isNewSupabaseApiKey(supabaseKey) && headers.get("Authorization") === `Bearer ${supabaseKey}`) {
+      headers.delete("Authorization");
+    }
+    headers.set("apikey", supabaseKey);
+    return fetch(input, { ...init, headers });
+  };
+}
+
 export const supabase = createClient(url, publishableKey, {
+  global: {
+    fetch: createSupabaseFetch(publishableKey),
+  },
   auth: {
     persistSession: true,
     autoRefreshToken: true,

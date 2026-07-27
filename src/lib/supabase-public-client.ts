@@ -26,7 +26,36 @@ if (!url || !publishableKey) {
   throw new Error("Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY.");
 }
 
+// New-format Supabase keys (sb_publishable_..., sb_secret_...) are opaque
+// strings, NOT JWTs. supabase-js still defaults to sending them as
+// `Authorization: Bearer <key>` when there is no session, which PostgREST
+// then fails to decode as a JWT and rejects. Stripping that header and
+// relying on `apikey` alone (which PostgREST accepts for anon requests)
+// fixes anonymous storefront reads.
+function isNewSupabaseApiKey(value: string): boolean {
+  return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
+}
+
+function createSupabaseFetch(supabaseKey: string): typeof fetch {
+  return (input, init) => {
+    const headers = new Headers(
+      typeof Request !== "undefined" && input instanceof Request ? input.headers : undefined,
+    );
+    if (init?.headers) {
+      new Headers(init.headers).forEach((value, key) => headers.set(key, value));
+    }
+    if (isNewSupabaseApiKey(supabaseKey) && headers.get("Authorization") === `Bearer ${supabaseKey}`) {
+      headers.delete("Authorization");
+    }
+    headers.set("apikey", supabaseKey);
+    return fetch(input, { ...init, headers });
+  };
+}
+
 export const supabasePublic = createClient(url, publishableKey, {
+  global: {
+    fetch: createSupabaseFetch(publishableKey),
+  },
   auth: {
     persistSession: false,
     autoRefreshToken: false,
