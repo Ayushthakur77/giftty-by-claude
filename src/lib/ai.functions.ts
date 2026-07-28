@@ -13,6 +13,28 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/server/supabase-admin.server";
 
+/**
+ * Gemini occasionally returns 503 ("model is currently experiencing high
+ * demand") or 429 (rate limited) — both are transient and usually resolve
+ * within a couple of seconds. Retry those with a short exponential backoff
+ * before giving up; don't retry on 4xx errors that indicate a real problem
+ * with the request itself (bad API key, malformed body, etc).
+ */
+async function fetchGeminiWithRetry(url: string, init: RequestInit, maxAttempts = 3): Promise<Response> {
+  let lastResponse: Response | null = null;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const response = await fetch(url, init);
+    if (response.ok) return response;
+    if (response.status !== 503 && response.status !== 429) return response;
+    lastResponse = response;
+    if (attempt < maxAttempts) {
+      const delayMs = 500 * 2 ** (attempt - 1); // 500ms, 1000ms, ...
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+  return lastResponse!;
+}
+
 const recommendInput = z.object({
   query: z.string().min(3).max(500),
   userId: z.string().uuid().optional(),
@@ -89,7 +111,7 @@ Desired tone: ${toneDescriptions[data.tone]}.
 Keep it under 200 characters. Return ONLY the message text, no quotes, no explanation.`;
 
     try {
-      const response = await fetch(
+      const response = await fetchGeminiWithRetry(
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
         {
           method: "POST",
@@ -109,14 +131,21 @@ Keep it under 200 characters. Return ONLY the message text, no quotes, no explan
 
       return { ok: true as const, message: text.replace(/^["']|["']$/g, "").slice(0, 200) };
     } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
       await supabaseAdmin.from("ai_logs").insert({
         user_id: data.userId ?? null,
         feature: "greeting_card",
         input_summary: data.context.slice(0, 200),
         success: false,
-        error_message: err instanceof Error ? err.message : "Unknown error",
+        error_message: message,
       });
-      return { ok: false as const, error: "Could not generate a message right now — please try again." };
+      const isOverloaded = message.includes("503") || message.includes("429");
+      return {
+        ok: false as const,
+        error: isOverloaded
+          ? "Our AI writer is quite busy right now — please try again in a few seconds."
+          : "Could not generate a message right now — please try again.",
+      };
     }
   });
 
@@ -199,8 +228,9 @@ Pick matching ids from the EXACT ids listed above only, split into productIds, r
 
     let aiResult: { reasoning: string; productIds: string[]; readyBoxIds: string[]; emptyBoxIds: string[]; suggestedGreeting: string };
     let lastErrorDetail = "";
+    let wasOverloaded = false;
     try {
-      const response = await fetch(
+      const response = await fetchGeminiWithRetry(
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
         {
           method: "POST",
@@ -213,6 +243,7 @@ Pick matching ids from the EXACT ids listed above only, split into productIds, r
       );
 
       if (!response.ok) {
+        wasOverloaded = response.status === 503 || response.status === 429;
         const errBody = await response.text().catch(() => "");
         lastErrorDetail = `Gemini API ${response.status}: ${errBody.slice(0, 300)}`;
         throw new Error(lastErrorDetail);
@@ -234,7 +265,12 @@ Pick matching ids from the EXACT ids listed above only, split into productIds, r
         success: false,
         error_message: (lastErrorDetail || message).slice(0, 500),
       });
-      return { ok: false as const, error: `AI assistant error: ${(lastErrorDetail || message).slice(0, 200)}` };
+      return {
+        ok: false as const,
+        error: wasOverloaded
+          ? "Our AI Gift Finder is quite busy right now (Gemini is under high demand) — please try again in a few seconds."
+          : `AI assistant error: ${(lastErrorDetail || message).slice(0, 200)}`,
+      };
     }
 
     // Re-verify every picked id against the real, current candidate sets.

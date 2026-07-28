@@ -89,7 +89,17 @@ function AiFinderPage() {
 
       {loading && <p className="text-gray-400 text-sm mt-6 text-center">Searching products, gift boxes, and build-your-own options…</p>}
 
-      {error && <p className="text-red-600 text-sm mt-4">{error}</p>}
+      {error && (
+        <div className="mt-4 border border-red-200 bg-red-50 rounded-lg p-4 flex items-start justify-between gap-3">
+          <p className="text-red-600 text-sm">{error}</p>
+          <button
+            onClick={handleSubmit}
+            className="shrink-0 text-xs font-semibold text-red-700 border border-red-300 rounded px-3 py-1.5 hover:bg-red-100 transition"
+          >
+            Try again
+          </button>
+        </div>
+      )}
 
       {result && (
         <div className="mt-8">

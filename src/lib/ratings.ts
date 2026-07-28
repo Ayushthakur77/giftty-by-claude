@@ -29,7 +29,8 @@ export function useProductRatings(productIds: string[]) {
         map[key].count += 1;
       }
       for (const key of Object.keys(map)) {
-        map[key].avg = Math.round(map[key].avg * 10) / 10;
+        const entry = map[key]!;
+        entry.avg = Math.round(entry.avg * 10) / 10;
       }
       return map;
     },
