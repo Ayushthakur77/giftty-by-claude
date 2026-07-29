@@ -4,6 +4,7 @@ import { Sparkles, ChevronRight } from "lucide-react";
 import { listCategories, listProducts, listReadyBoxes } from "@/lib/public-catalog";
 import { supabasePublic as supabase } from "@/lib/supabase-public-client";
 import { ProductCard, ProductGridSkeleton } from "@/components/ProductCard";
+import { HeroCarousel } from "@/components/HeroCarousel";
 import { useProductRatings } from "@/lib/ratings";
 
 export const Route = createFileRoute("/")({
@@ -85,39 +86,12 @@ function HomePage() {
   const trendingRatings = useProductRatings((trending ?? []).map((p) => p.id));
   const priceRatings = useProductRatings((priceProducts ?? []).map((p) => p.id));
 
-  const heroBanner = banners?.[0];
   const stripBanners = (banners ?? []).slice(1, 4);
 
   return (
     <div className="bg-[#f1f3f6] min-h-screen">
-      {/* Hero */}
-      <section
-        className="bg-gradient-to-br from-maroon to-maroon-dark bg-cover bg-center"
-        style={heroBanner ? { backgroundImage: `url(${heroBanner.image_url})` } : undefined}
-      >
-        <div className={`max-w-[1400px] mx-auto px-4 py-10 md:py-16 text-center ${heroBanner ? "bg-maroon/60 backdrop-blur-sm" : ""}`}>
-          <h1 className="font-heading text-2xl md:text-4xl font-bold text-white mb-3">
-            {heroBanner?.title || "Send joy across India in a click."}
-          </h1>
-          <p className="text-cream/90 text-sm md:text-base max-w-xl mx-auto mb-6">
-            {heroBanner?.subtitle || "Personalized gifts, curated gift boxes, and an AI assistant to help you find the perfect gift for anyone, any occasion."}
-          </p>
-          <div className="flex items-center justify-center gap-3">
-            <Link
-              to={(heroBanner?.link as any) || "/gift-box"}
-              className="bg-gold text-white px-5 py-2.5 rounded-sm font-semibold text-sm hover:bg-gold-light transition"
-            >
-              {heroBanner ? "Shop now" : "Build a gift box"}
-            </Link>
-            <Link
-              to="/ai-finder"
-              className="border border-white/60 text-white px-5 py-2.5 rounded-sm font-semibold text-sm hover:bg-white/10 transition"
-            >
-              Ask AI for a gift idea
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* Hero — auto-slides every 2s when there's more than one banner */}
+      <HeroCarousel banners={banners ?? []} />
 
       {/* Category strip */}
       {isSectionVisible("category_grid") && (
