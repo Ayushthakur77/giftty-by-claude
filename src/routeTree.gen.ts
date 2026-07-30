@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WishlistRouteImport } from './routes/wishlist'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as MomentsRouteImport } from './routes/moments'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as GiftBoxesRouteImport } from './routes/gift-boxes'
 import { Route as GiftBoxRouteImport } from './routes/gift-box'
@@ -22,6 +23,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SSlugRouteImport } from './routes/s.$slug'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as LegalTermsRouteImport } from './routes/legal.terms'
 import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
@@ -46,6 +48,7 @@ import { Route as AdminCouponsRouteImport } from './routes/admin.coupons'
 import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 import { Route as AdminAiLogsRouteImport } from './routes/admin.ai-logs'
 import { Route as AccountReferralsRouteImport } from './routes/account_.referrals'
+import { Route as MomentsCreateTemplateSlugRouteImport } from './routes/moments.create.$templateSlug'
 import { Route as ApiCronBirthdayRemindersRouteImport } from './routes/api.cron.birthday-reminders'
 import { Route as AccountOrdersOrderIdInvoiceRouteImport } from './routes/account_.orders.$orderId.invoice'
 
@@ -62,6 +65,11 @@ const SearchRoute = SearchRouteImport.update({
 const NotificationsRoute = NotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MomentsRoute = MomentsRouteImport.update({
+  id: '/moments',
+  path: '/moments',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HelpRoute = HelpRouteImport.update({
@@ -112,6 +120,11 @@ const AboutRoute = AboutRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SSlugRoute = SSlugRouteImport.update({
+  id: '/s/$slug',
+  path: '/s/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PSlugRoute = PSlugRouteImport.update({
@@ -234,6 +247,12 @@ const AccountReferralsRoute = AccountReferralsRouteImport.update({
   path: '/account/referrals',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MomentsCreateTemplateSlugRoute =
+  MomentsCreateTemplateSlugRouteImport.update({
+    id: '/create/$templateSlug',
+    path: '/create/$templateSlug',
+    getParentRoute: () => MomentsRoute,
+  } as any)
 const ApiCronBirthdayRemindersRoute =
   ApiCronBirthdayRemindersRouteImport.update({
     id: '/api/cron/birthday-reminders',
@@ -258,6 +277,7 @@ export interface FileRoutesByFullPath {
   '/gift-box': typeof GiftBoxRoute
   '/gift-boxes': typeof GiftBoxesRoute
   '/help': typeof HelpRoute
+  '/moments': typeof MomentsRouteWithChildren
   '/notifications': typeof NotificationsRoute
   '/search': typeof SearchRoute
   '/wishlist': typeof WishlistRoute
@@ -285,7 +305,9 @@ export interface FileRoutesByFullPath {
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
   '/p/$slug': typeof PSlugRoute
+  '/s/$slug': typeof SSlugRoute
   '/api/cron/birthday-reminders': typeof ApiCronBirthdayRemindersRoute
+  '/moments/create/$templateSlug': typeof MomentsCreateTemplateSlugRoute
   '/account/orders/$orderId/invoice': typeof AccountOrdersOrderIdInvoiceRoute
 }
 export interface FileRoutesByTo {
@@ -299,6 +321,7 @@ export interface FileRoutesByTo {
   '/gift-box': typeof GiftBoxRoute
   '/gift-boxes': typeof GiftBoxesRoute
   '/help': typeof HelpRoute
+  '/moments': typeof MomentsRouteWithChildren
   '/notifications': typeof NotificationsRoute
   '/search': typeof SearchRoute
   '/wishlist': typeof WishlistRoute
@@ -326,7 +349,9 @@ export interface FileRoutesByTo {
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
   '/p/$slug': typeof PSlugRoute
+  '/s/$slug': typeof SSlugRoute
   '/api/cron/birthday-reminders': typeof ApiCronBirthdayRemindersRoute
+  '/moments/create/$templateSlug': typeof MomentsCreateTemplateSlugRoute
   '/account/orders/$orderId/invoice': typeof AccountOrdersOrderIdInvoiceRoute
 }
 export interface FileRoutesById {
@@ -341,6 +366,7 @@ export interface FileRoutesById {
   '/gift-box': typeof GiftBoxRoute
   '/gift-boxes': typeof GiftBoxesRoute
   '/help': typeof HelpRoute
+  '/moments': typeof MomentsRouteWithChildren
   '/notifications': typeof NotificationsRoute
   '/search': typeof SearchRoute
   '/wishlist': typeof WishlistRoute
@@ -368,7 +394,9 @@ export interface FileRoutesById {
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
   '/p/$slug': typeof PSlugRoute
+  '/s/$slug': typeof SSlugRoute
   '/api/cron/birthday-reminders': typeof ApiCronBirthdayRemindersRoute
+  '/moments/create/$templateSlug': typeof MomentsCreateTemplateSlugRoute
   '/account_/orders/$orderId/invoice': typeof AccountOrdersOrderIdInvoiceRoute
 }
 export interface FileRouteTypes {
@@ -384,6 +412,7 @@ export interface FileRouteTypes {
     | '/gift-box'
     | '/gift-boxes'
     | '/help'
+    | '/moments'
     | '/notifications'
     | '/search'
     | '/wishlist'
@@ -411,7 +440,9 @@ export interface FileRouteTypes {
     | '/legal/privacy'
     | '/legal/terms'
     | '/p/$slug'
+    | '/s/$slug'
     | '/api/cron/birthday-reminders'
+    | '/moments/create/$templateSlug'
     | '/account/orders/$orderId/invoice'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -425,6 +456,7 @@ export interface FileRouteTypes {
     | '/gift-box'
     | '/gift-boxes'
     | '/help'
+    | '/moments'
     | '/notifications'
     | '/search'
     | '/wishlist'
@@ -452,7 +484,9 @@ export interface FileRouteTypes {
     | '/legal/privacy'
     | '/legal/terms'
     | '/p/$slug'
+    | '/s/$slug'
     | '/api/cron/birthday-reminders'
+    | '/moments/create/$templateSlug'
     | '/account/orders/$orderId/invoice'
   id:
     | '__root__'
@@ -466,6 +500,7 @@ export interface FileRouteTypes {
     | '/gift-box'
     | '/gift-boxes'
     | '/help'
+    | '/moments'
     | '/notifications'
     | '/search'
     | '/wishlist'
@@ -493,7 +528,9 @@ export interface FileRouteTypes {
     | '/legal/privacy'
     | '/legal/terms'
     | '/p/$slug'
+    | '/s/$slug'
     | '/api/cron/birthday-reminders'
+    | '/moments/create/$templateSlug'
     | '/account_/orders/$orderId/invoice'
   fileRoutesById: FileRoutesById
 }
@@ -508,6 +545,7 @@ export interface RootRouteChildren {
   GiftBoxRoute: typeof GiftBoxRoute
   GiftBoxesRoute: typeof GiftBoxesRoute
   HelpRoute: typeof HelpRoute
+  MomentsRoute: typeof MomentsRouteWithChildren
   NotificationsRoute: typeof NotificationsRoute
   SearchRoute: typeof SearchRoute
   WishlistRoute: typeof WishlistRoute
@@ -521,6 +559,7 @@ export interface RootRouteChildren {
   LegalPrivacyRoute: typeof LegalPrivacyRoute
   LegalTermsRoute: typeof LegalTermsRoute
   PSlugRoute: typeof PSlugRoute
+  SSlugRoute: typeof SSlugRoute
   ApiCronBirthdayRemindersRoute: typeof ApiCronBirthdayRemindersRoute
   AccountOrdersOrderIdInvoiceRoute: typeof AccountOrdersOrderIdInvoiceRoute
 }
@@ -546,6 +585,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/notifications'
       preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/moments': {
+      id: '/moments'
+      path: '/moments'
+      fullPath: '/moments'
+      preLoaderRoute: typeof MomentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/help': {
@@ -616,6 +662,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/s/$slug': {
+      id: '/s/$slug'
+      path: '/s/$slug'
+      fullPath: '/s/$slug'
+      preLoaderRoute: typeof SSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/p/$slug': {
@@ -786,6 +839,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountReferralsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/moments/create/$templateSlug': {
+      id: '/moments/create/$templateSlug'
+      path: '/create/$templateSlug'
+      fullPath: '/moments/create/$templateSlug'
+      preLoaderRoute: typeof MomentsCreateTemplateSlugRouteImport
+      parentRoute: typeof MomentsRoute
+    }
     '/api/cron/birthday-reminders': {
       id: '/api/cron/birthday-reminders'
       path: '/api/cron/birthday-reminders'
@@ -839,6 +899,17 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface MomentsRouteChildren {
+  MomentsCreateTemplateSlugRoute: typeof MomentsCreateTemplateSlugRoute
+}
+
+const MomentsRouteChildren: MomentsRouteChildren = {
+  MomentsCreateTemplateSlugRoute: MomentsCreateTemplateSlugRoute,
+}
+
+const MomentsRouteWithChildren =
+  MomentsRoute._addFileChildren(MomentsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
@@ -850,6 +921,7 @@ const rootRouteChildren: RootRouteChildren = {
   GiftBoxRoute: GiftBoxRoute,
   GiftBoxesRoute: GiftBoxesRoute,
   HelpRoute: HelpRoute,
+  MomentsRoute: MomentsRouteWithChildren,
   NotificationsRoute: NotificationsRoute,
   SearchRoute: SearchRoute,
   WishlistRoute: WishlistRoute,
@@ -863,6 +935,7 @@ const rootRouteChildren: RootRouteChildren = {
   LegalPrivacyRoute: LegalPrivacyRoute,
   LegalTermsRoute: LegalTermsRoute,
   PSlugRoute: PSlugRoute,
+  SSlugRoute: SSlugRoute,
   ApiCronBirthdayRemindersRoute: ApiCronBirthdayRemindersRoute,
   AccountOrdersOrderIdInvoiceRoute: AccountOrdersOrderIdInvoiceRoute,
 }

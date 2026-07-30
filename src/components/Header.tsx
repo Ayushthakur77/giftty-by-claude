@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Search, Heart, ShoppingBag, User, Bell, Sparkles, ShieldCheck, ChevronDown, Gift } from "lucide-react";
+import { Search, Heart, ShoppingBag, User, Bell, Sparkles, ShieldCheck, ChevronDown, Gift, Wand2 } from "lucide-react";
 import { listCategories } from "@/lib/public-catalog";
 import { useCartStore } from "@/lib/cart-store";
 import { useSession } from "@/lib/use-session";
@@ -127,6 +127,12 @@ export function Header() {
               className="whitespace-nowrap bg-mint-dark/15 text-mint-dark hover:bg-mint-dark/25 px-2.5 py-1 rounded font-semibold transition ml-1"
             >
               Build a Box
+            </Link>
+            <Link
+              to="/moments"
+              className="whitespace-nowrap flex items-center gap-1 text-maroon hover:text-maroon-dark font-semibold px-2.5 py-1 transition"
+            >
+              <Wand2 className="w-3.5 h-3.5" /> Surprise Pages ✨
             </Link>
             <Link
               to="/ai-finder"
