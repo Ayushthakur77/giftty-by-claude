@@ -25,6 +25,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SSlugRouteImport } from './routes/s.$slug'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
+import { Route as MomentsMineRouteImport } from './routes/moments.mine'
 import { Route as LegalTermsRouteImport } from './routes/legal.terms'
 import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
 import { Route as CCategorySlugRouteImport } from './routes/c.$categorySlug'
@@ -48,6 +49,7 @@ import { Route as AdminCouponsRouteImport } from './routes/admin.coupons'
 import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 import { Route as AdminAiLogsRouteImport } from './routes/admin.ai-logs'
 import { Route as AccountReferralsRouteImport } from './routes/account_.referrals'
+import { Route as MomentsEditPageSlugRouteImport } from './routes/moments.edit.$pageSlug'
 import { Route as MomentsCreateTemplateSlugRouteImport } from './routes/moments.create.$templateSlug'
 import { Route as ApiCronBirthdayRemindersRouteImport } from './routes/api.cron.birthday-reminders'
 import { Route as AccountOrdersOrderIdInvoiceRouteImport } from './routes/account_.orders.$orderId.invoice'
@@ -131,6 +133,11 @@ const PSlugRoute = PSlugRouteImport.update({
   id: '/p/$slug',
   path: '/p/$slug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const MomentsMineRoute = MomentsMineRouteImport.update({
+  id: '/mine',
+  path: '/mine',
+  getParentRoute: () => MomentsRoute,
 } as any)
 const LegalTermsRoute = LegalTermsRouteImport.update({
   id: '/legal/terms',
@@ -247,6 +254,11 @@ const AccountReferralsRoute = AccountReferralsRouteImport.update({
   path: '/account/referrals',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MomentsEditPageSlugRoute = MomentsEditPageSlugRouteImport.update({
+  id: '/edit/$pageSlug',
+  path: '/edit/$pageSlug',
+  getParentRoute: () => MomentsRoute,
+} as any)
 const MomentsCreateTemplateSlugRoute =
   MomentsCreateTemplateSlugRouteImport.update({
     id: '/create/$templateSlug',
@@ -304,10 +316,12 @@ export interface FileRoutesByFullPath {
   '/c/$categorySlug': typeof CCategorySlugRoute
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
+  '/moments/mine': typeof MomentsMineRoute
   '/p/$slug': typeof PSlugRoute
   '/s/$slug': typeof SSlugRoute
   '/api/cron/birthday-reminders': typeof ApiCronBirthdayRemindersRoute
   '/moments/create/$templateSlug': typeof MomentsCreateTemplateSlugRoute
+  '/moments/edit/$pageSlug': typeof MomentsEditPageSlugRoute
   '/account/orders/$orderId/invoice': typeof AccountOrdersOrderIdInvoiceRoute
 }
 export interface FileRoutesByTo {
@@ -348,10 +362,12 @@ export interface FileRoutesByTo {
   '/c/$categorySlug': typeof CCategorySlugRoute
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
+  '/moments/mine': typeof MomentsMineRoute
   '/p/$slug': typeof PSlugRoute
   '/s/$slug': typeof SSlugRoute
   '/api/cron/birthday-reminders': typeof ApiCronBirthdayRemindersRoute
   '/moments/create/$templateSlug': typeof MomentsCreateTemplateSlugRoute
+  '/moments/edit/$pageSlug': typeof MomentsEditPageSlugRoute
   '/account/orders/$orderId/invoice': typeof AccountOrdersOrderIdInvoiceRoute
 }
 export interface FileRoutesById {
@@ -393,10 +409,12 @@ export interface FileRoutesById {
   '/c/$categorySlug': typeof CCategorySlugRoute
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
+  '/moments/mine': typeof MomentsMineRoute
   '/p/$slug': typeof PSlugRoute
   '/s/$slug': typeof SSlugRoute
   '/api/cron/birthday-reminders': typeof ApiCronBirthdayRemindersRoute
   '/moments/create/$templateSlug': typeof MomentsCreateTemplateSlugRoute
+  '/moments/edit/$pageSlug': typeof MomentsEditPageSlugRoute
   '/account_/orders/$orderId/invoice': typeof AccountOrdersOrderIdInvoiceRoute
 }
 export interface FileRouteTypes {
@@ -439,10 +457,12 @@ export interface FileRouteTypes {
     | '/c/$categorySlug'
     | '/legal/privacy'
     | '/legal/terms'
+    | '/moments/mine'
     | '/p/$slug'
     | '/s/$slug'
     | '/api/cron/birthday-reminders'
     | '/moments/create/$templateSlug'
+    | '/moments/edit/$pageSlug'
     | '/account/orders/$orderId/invoice'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -483,10 +503,12 @@ export interface FileRouteTypes {
     | '/c/$categorySlug'
     | '/legal/privacy'
     | '/legal/terms'
+    | '/moments/mine'
     | '/p/$slug'
     | '/s/$slug'
     | '/api/cron/birthday-reminders'
     | '/moments/create/$templateSlug'
+    | '/moments/edit/$pageSlug'
     | '/account/orders/$orderId/invoice'
   id:
     | '__root__'
@@ -527,10 +549,12 @@ export interface FileRouteTypes {
     | '/c/$categorySlug'
     | '/legal/privacy'
     | '/legal/terms'
+    | '/moments/mine'
     | '/p/$slug'
     | '/s/$slug'
     | '/api/cron/birthday-reminders'
     | '/moments/create/$templateSlug'
+    | '/moments/edit/$pageSlug'
     | '/account_/orders/$orderId/invoice'
   fileRoutesById: FileRoutesById
 }
@@ -677,6 +701,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/p/$slug'
       preLoaderRoute: typeof PSlugRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/moments/mine': {
+      id: '/moments/mine'
+      path: '/mine'
+      fullPath: '/moments/mine'
+      preLoaderRoute: typeof MomentsMineRouteImport
+      parentRoute: typeof MomentsRoute
     }
     '/legal/terms': {
       id: '/legal/terms'
@@ -839,6 +870,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountReferralsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/moments/edit/$pageSlug': {
+      id: '/moments/edit/$pageSlug'
+      path: '/edit/$pageSlug'
+      fullPath: '/moments/edit/$pageSlug'
+      preLoaderRoute: typeof MomentsEditPageSlugRouteImport
+      parentRoute: typeof MomentsRoute
+    }
     '/moments/create/$templateSlug': {
       id: '/moments/create/$templateSlug'
       path: '/create/$templateSlug'
@@ -900,11 +938,15 @@ const AdminRouteChildren: AdminRouteChildren = {
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface MomentsRouteChildren {
+  MomentsMineRoute: typeof MomentsMineRoute
   MomentsCreateTemplateSlugRoute: typeof MomentsCreateTemplateSlugRoute
+  MomentsEditPageSlugRoute: typeof MomentsEditPageSlugRoute
 }
 
 const MomentsRouteChildren: MomentsRouteChildren = {
+  MomentsMineRoute: MomentsMineRoute,
   MomentsCreateTemplateSlugRoute: MomentsCreateTemplateSlugRoute,
+  MomentsEditPageSlugRoute: MomentsEditPageSlugRoute,
 }
 
 const MomentsRouteWithChildren =

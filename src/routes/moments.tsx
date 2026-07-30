@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Sparkles, Cake, Heart } from "lucide-react";
+import { Sparkles, Cake, Heart, Users, ListChecks } from "lucide-react";
 import { listMomentTemplates } from "@/lib/moments-catalog";
 
 export const Route = createFileRoute("/moments")({ component: MomentsGallery });
@@ -8,6 +8,7 @@ export const Route = createFileRoute("/moments")({ component: MomentsGallery });
 const CATEGORY_ICON: Record<string, React.ElementType> = {
   birthday: Cake,
   romantic: Heart,
+  friendship: Users,
 };
 
 function MomentsGallery() {
@@ -28,6 +29,12 @@ function MomentsGallery() {
       </section>
 
       <div className="max-w-5xl mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-heading text-lg font-bold text-gray-900">Choose a template</h2>
+          <Link to="/moments/mine" className="flex items-center gap-1 text-xs font-semibold text-maroon hover:underline">
+            <ListChecks className="w-3.5 h-3.5" /> My Pages
+          </Link>
+        </div>
         {isLoading && (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {Array.from({ length: 3 }).map((_, i) => (

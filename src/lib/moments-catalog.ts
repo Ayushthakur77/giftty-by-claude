@@ -63,6 +63,16 @@ export async function getMomentTemplate(slug: string): Promise<MomentTemplate | 
   return data as unknown as MomentTemplate | null;
 }
 
+export async function getMomentTemplateById(id: string): Promise<MomentTemplate | null> {
+  const { data, error } = await supabasePublic
+    .from("moments_templates")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data as unknown as MomentTemplate | null;
+}
+
 export async function getMomentPageBySlug(slug: string): Promise<MomentPage | null> {
   const { data, error } = await supabasePublic
     .from("moments_pages")
@@ -88,6 +98,36 @@ export async function listMyMomentPages(userId: string): Promise<(MomentPage & {
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []) as unknown as (MomentPage & { moments_templates: { title: string; slug: string } | null })[];
+}
+
+export async function getMyMomentPage(userId: string, slug: string): Promise<MomentPage | null> {
+  const { data, error } = await supabase
+    .from("moments_pages")
+    .select("*")
+    .eq("slug", slug)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data as unknown as MomentPage | null;
+}
+
+export async function updateMomentPage(
+  pageId: string,
+  updates: Partial<{ title: string; dataJson: Record<string, string>; themeColor: string; fontStyle: string; isPublished: boolean }>
+): Promise<void> {
+  const patch: Record<string, unknown> = {};
+  if (updates.title !== undefined) patch.title = updates.title;
+  if (updates.dataJson !== undefined) patch.data_json = updates.dataJson;
+  if (updates.themeColor !== undefined) patch.theme_color = updates.themeColor;
+  if (updates.fontStyle !== undefined) patch.font_style = updates.fontStyle;
+  if (updates.isPublished !== undefined) patch.is_published = updates.isPublished;
+  const { error } = await supabase.from("moments_pages").update(patch).eq("id", pageId);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteMomentPage(pageId: string): Promise<void> {
+  const { error } = await supabase.from("moments_pages").delete().eq("id", pageId);
+  if (error) throw new Error(error.message);
 }
 
 function generateSlug(): string {

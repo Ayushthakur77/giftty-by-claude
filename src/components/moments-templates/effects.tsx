@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useMemo } from "react";
 
 /** Gently falling confetti pieces — used behind birthday/festival templates. */
-export function ConfettiBackground({ color }: { color: string }) {
+export function ConfettiBackground() {
   const pieces = useMemo(
     () =>
       Array.from({ length: 24 }).map((_, i) => ({
@@ -34,7 +34,37 @@ export function ConfettiBackground({ color }: { color: string }) {
   );
 }
 
-/** Slowly rising, fading hearts — used behind romantic templates. */
+/** Generic upward-floating emoji effect — used by templates that don't fit confetti/hearts. */
+export function FloatingEmojis({ emojis }: { emojis: string[] }) {
+  const items = useMemo(
+    () =>
+      Array.from({ length: 18 }).map((_, i) => ({
+        id: i,
+        left: Math.random() * 100,
+        delay: Math.random() * 3,
+        duration: 5 + Math.random() * 4,
+        size: 16 + Math.random() * 16,
+        emoji: emojis[i % emojis.length],
+      })),
+    [emojis]
+  );
+  return (
+    <div className="pointer-events-none fixed inset-0 overflow-hidden z-0" aria-hidden>
+      {items.map((h) => (
+        <motion.span
+          key={h.id}
+          className="absolute select-none"
+          style={{ left: `${h.left}%`, bottom: -40, fontSize: h.size }}
+          initial={{ y: 0, opacity: 0 }}
+          animate={{ y: "-110vh", opacity: [0, 0.9, 0.9, 0], rotate: [0, 15, -15, 0] }}
+          transition={{ delay: h.delay, duration: h.duration, repeat: Infinity, ease: "linear" }}
+        >
+          {h.emoji}
+        </motion.span>
+      ))}
+    </div>
+  );
+}
 export function FloatingHearts({ color }: { color: string }) {
   const hearts = useMemo(
     () =>

@@ -172,6 +172,7 @@ function MomentEditorPage() {
             Preview page
           </Link>
           <Link to="/moments" className="text-maroon text-sm mt-2 hover:underline">Create another</Link>
+          <Link to="/moments/mine" className="text-gray-400 text-xs hover:text-maroon transition">Manage my pages</Link>
         </div>
       </div>
     );

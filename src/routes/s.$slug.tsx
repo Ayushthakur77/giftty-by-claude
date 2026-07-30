@@ -2,15 +2,17 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { getMomentPageBySlug, getMomentTemplate, incrementMomentPageViews } from "@/lib/moments-catalog";
+import { getMomentPageBySlug, getMomentTemplateById, incrementMomentPageViews } from "@/lib/moments-catalog";
 import { BirthdayTemplate } from "@/components/moments-templates/BirthdayTemplate";
 import { LoveLetterTemplate } from "@/components/moments-templates/LoveLetterTemplate";
+import { FriendshipTemplate } from "@/components/moments-templates/FriendshipTemplate";
 
 export const Route = createFileRoute("/s/$slug")({ component: ReceiverPage });
 
 const TEMPLATE_COMPONENTS: Record<string, React.ComponentType<{ data: Record<string, string>; themeColor: string }>> = {
   "birthday-surprise": BirthdayTemplate,
   "love-letter": LoveLetterTemplate,
+  "friendship-appreciation": FriendshipTemplate,
 };
 
 function ReceiverPage() {
@@ -24,14 +26,7 @@ function ReceiverPage() {
 
   const { data: template } = useQuery({
     queryKey: ["moment-page-template", page?.template_id],
-    queryFn: async () => {
-      // The page doesn't carry the template slug directly, so we look it up
-      // once by trying each known template — small, fixed set for the MVP.
-      const all = await Promise.all(
-        Object.keys(TEMPLATE_COMPONENTS).map((slug) => getMomentTemplate(slug))
-      );
-      return all.find((t) => t?.id === page?.template_id) ?? null;
-    },
+    queryFn: () => getMomentTemplateById(page!.template_id),
     enabled: !!page,
   });
 
