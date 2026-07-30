@@ -5,7 +5,7 @@ import { Eye, Pencil, Trash2, Share2, Plus } from "lucide-react";
 import { useSession } from "@/lib/use-session";
 import { listMyMomentPages, deleteMomentPage } from "@/lib/moments-catalog";
 
-export const Route = createFileRoute("/moments/mine")({ component: MyMomentsPage });
+export const Route = createFileRoute("/moments_/mine")({ component: MyMomentsPage });
 
 function MyMomentsPage() {
   const { user, loading: sessionLoading } = useSession();

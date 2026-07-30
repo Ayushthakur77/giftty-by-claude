@@ -10,7 +10,7 @@ import {
   type MomentField,
 } from "@/lib/moments-catalog";
 
-export const Route = createFileRoute("/moments/create/$templateSlug")({ component: MomentEditorPage });
+export const Route = createFileRoute("/moments_/create/$templateSlug")({ component: MomentEditorPage });
 
 const THEME_SWATCHES = ["#7a1f3d", "#c9184a", "#8d4004", "#1b5e4a", "#2b2d5e", "#4a2545"];
 const FONT_STYLES = [

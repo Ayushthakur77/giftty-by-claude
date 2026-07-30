@@ -12,7 +12,7 @@ import {
   type MomentField,
 } from "@/lib/moments-catalog";
 
-export const Route = createFileRoute("/moments/edit/$pageSlug")({ component: MomentEditPage });
+export const Route = createFileRoute("/moments_/edit/$pageSlug")({ component: MomentEditPage });
 
 const THEME_SWATCHES = ["#7a1f3d", "#c9184a", "#8d4004", "#1b5e4a", "#2b2d5e", "#4a2545", "#2b5a8e"];
 const FONT_STYLES = [
