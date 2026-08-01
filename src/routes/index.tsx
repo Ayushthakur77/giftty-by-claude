@@ -26,7 +26,7 @@ function SectionPanel({
 }) {
   return (
     <section className="max-w-[1400px] mx-auto px-3 md:px-5 py-3">
-      <div className="bg-white rounded-sm shadow-sm border border-gray-100 p-4">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100/70 p-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-heading text-lg md:text-xl font-bold text-gray-900">{title}</h2>
           {viewAllTo && (
@@ -89,14 +89,14 @@ function HomePage() {
   const stripBanners = (banners ?? []).slice(1, 4);
 
   return (
-    <div className="bg-[#f1f3f6] min-h-screen">
+    <div className="bg-cream min-h-screen">
       {/* Hero — auto-slides every 2s when there's more than one banner */}
       <HeroCarousel banners={banners ?? []} />
 
       {/* Category strip */}
       {isSectionVisible("category_grid") && (
         <section className="max-w-[1400px] mx-auto px-3 md:px-5 -mt-4 relative z-10">
-          <div className="bg-white rounded-sm shadow-md border border-gray-100 px-4 py-4">
+          <div className="bg-white rounded-2xl shadow-md border border-gray-100/70 px-4 py-4">
             {categoriesLoading && (
               <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-9 gap-3">
                 {Array.from({ length: 9 }).map((_, i) => (
@@ -140,7 +140,7 @@ function HomePage() {
               <a
                 key={b.id}
                 href={(b.link as string) || "#"}
-                className="relative rounded-sm overflow-hidden bg-gray-100 aspect-[3/1] sm:aspect-[16/7] group"
+                className="relative rounded-2xl overflow-hidden bg-gray-100 aspect-[3/1] sm:aspect-[16/7] group"
               >
                 {b.image_url ? (
                   <img src={b.image_url as string} alt={b.title as string} className="w-full h-full object-cover group-hover:scale-105 transition" />
@@ -156,7 +156,7 @@ function HomePage() {
       {/* Ready-made gift boxes — colorful deals-style panel */}
       {isSectionVisible("ready_boxes") && (
         <section className="max-w-[1400px] mx-auto px-3 md:px-5 py-3">
-          <div className="bg-gradient-to-r from-gold to-gold-light rounded-sm shadow-sm p-4">
+          <div className="bg-gradient-to-r from-gold to-gold-light rounded-2xl shadow-sm p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-heading text-lg md:text-xl font-bold text-white">Ready-made gift boxes</h2>
               <Link to="/gift-boxes" className="flex items-center gap-0.5 text-xs font-semibold text-white bg-white/20 hover:bg-white/30 px-2.5 py-1 rounded transition">
@@ -164,7 +164,7 @@ function HomePage() {
               </Link>
             </div>
             {boxesLoading && (
-              <div className="bg-white rounded-sm p-3">
+              <div className="bg-white rounded-2xl p-3">
                 <ProductGridSkeleton count={6} />
               </div>
             )}
@@ -177,7 +177,7 @@ function HomePage() {
               </p>
             )}
             {!boxesLoading && readyBoxes && readyBoxes.length > 0 && (
-              <div className="bg-white rounded-sm p-3">
+              <div className="bg-white rounded-2xl p-3">
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
                   {readyBoxes.slice(0, 6).map((b) => (
                     <ProductCard key={b.id} to="/box/$slug" product={b as any} badge="Gift Box" />
@@ -224,7 +224,7 @@ function HomePage() {
       <section className="max-w-[1400px] mx-auto px-3 md:px-5 py-4">
         <Link
           to="/ai-finder"
-          className="flex items-center justify-between gap-4 bg-white border border-gold/40 rounded-sm shadow-sm px-5 py-4 hover:border-gold transition"
+          className="flex items-center justify-between gap-4 bg-white border border-gold/40 rounded-2xl shadow-sm px-5 py-4 hover:border-gold transition"
         >
           <div className="flex items-center gap-3">
             <Sparkles className="w-5 h-5 text-maroon shrink-0" />

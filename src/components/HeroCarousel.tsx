@@ -79,13 +79,13 @@ export function HeroCarousel({ banners }: { banners: HeroBanner[] }) {
               <div className="flex items-center justify-center gap-3">
                 <Link
                   to={(banner.link as any) || "/gift-box"}
-                  className="bg-gold text-white px-5 py-2.5 rounded-sm font-semibold text-sm hover:bg-gold-light transition"
+                  className="bg-gold text-white px-5 py-2.5 rounded-2xl font-semibold text-sm hover:bg-gold-light transition"
                 >
                   {banner.id === "__default__" ? "Build a gift box" : "Shop now"}
                 </Link>
                 <Link
                   to="/ai-finder"
-                  className="border border-white/60 text-white px-5 py-2.5 rounded-sm font-semibold text-sm hover:bg-white/10 transition"
+                  className="border border-white/60 text-white px-5 py-2.5 rounded-2xl font-semibold text-sm hover:bg-white/10 transition"
                 >
                   Ask AI for a gift idea
                 </Link>

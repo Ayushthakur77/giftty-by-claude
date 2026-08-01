@@ -5,11 +5,15 @@
 @tailwind utilities;
 
 :root {
-  --color-maroon: #7A1F2B;
-  --color-gold: #D4AF37;
-  --color-cream: #F5EDE4;
+  --color-maroon: #0C3B2E;
+  --color-gold: #FFBA00;
+  --color-cream: #F5F3EC;
 }
 
 html.dark {
   color-scheme: dark;
+}
+
+body {
+  background-color: #F5F3EC;
 }

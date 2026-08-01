@@ -6,21 +6,27 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Giftty brand palette (from v1 design system — carried forward, it worked well)
+        // Giftty brand palette v2 — minimal, sage/forest-green + warm tan/amber
+        // (moodboard: 6D9773 / 0C3B2E / BB8A52 / FFBA00)
         maroon: {
-          DEFAULT: "#7A1F2B",
-          light: "#9A3A47",
-          dark: "#5A1620",
+          DEFAULT: "#0C3B2E",
+          light: "#1C5A45",
+          dark: "#082922",
         },
         gold: {
-          DEFAULT: "#D4AF37",
-          light: "#E5C868",
+          DEFAULT: "#FFBA00",
+          light: "#FFD24D",
         },
-        cream: "#F5EDE4",
+        cream: "#F5F3EC",
         mint: {
-          DEFAULT: "#A8E6CF",
-          light: "#D4F5E9",
-          dark: "#6FCBA3",
+          DEFAULT: "#6D9773",
+          light: "#9BB99F",
+          dark: "#4F7355",
+        },
+        tan: {
+          DEFAULT: "#BB8A52",
+          light: "#D3AD82",
+          dark: "#96693A",
         },
       },
       fontFamily: {

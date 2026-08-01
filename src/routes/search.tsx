@@ -59,7 +59,7 @@ function SearchPage() {
   }
 
   const FilterPanel = (
-    <div className="bg-white rounded-sm border border-gray-100 shadow-sm p-4">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
       <h3 className="font-semibold text-sm text-gray-900 mb-3">Category</h3>
       <div className="space-y-1.5">
         <button
@@ -82,14 +82,14 @@ function SearchPage() {
   );
 
   return (
-    <div className="bg-[#f1f3f6] min-h-screen">
+    <div className="bg-cream min-h-screen">
       <div className="max-w-[1400px] mx-auto px-3 md:px-5 py-4">
         <form onSubmit={handleSearchSubmit} className="relative max-w-xl mb-4">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Search all products…"
-            className="w-full rounded-sm border border-gray-200 bg-white pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-maroon/30"
+            className="w-full rounded-2xl border border-gray-200 bg-white pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-maroon/30"
           />
           <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         </form>
@@ -99,7 +99,7 @@ function SearchPage() {
           <aside className="hidden md:block">{FilterPanel}</aside>
 
           <div>
-            <div className="bg-white rounded-sm border border-gray-100 shadow-sm px-4 py-3 mb-3 flex items-center justify-between flex-wrap gap-2">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 mb-3 flex items-center justify-between flex-wrap gap-2">
               <div>
                 <h1 className="font-heading text-base font-bold text-gray-900">
                   {q ? `Results for "${q}"` : activeCategory ? activeCategory.name : "All Products"}
@@ -127,19 +127,19 @@ function SearchPage() {
             </div>
 
             {isLoading && (
-              <div className="bg-white rounded-sm border border-gray-100 p-4">
+              <div className="bg-white rounded-2xl border border-gray-100 p-4">
                 <ProductGridSkeleton count={12} />
               </div>
             )}
 
             {!isLoading && results?.length === 0 && (
-              <div className="bg-white rounded-sm border border-gray-100 text-center py-20 text-gray-500 text-sm">
+              <div className="bg-white rounded-2xl border border-gray-100 text-center py-20 text-gray-500 text-sm">
                 {q ? `No products found for "${q}". Try a different search term.` : "No products available yet."}
               </div>
             )}
 
             {!isLoading && results && results.length > 0 && (
-              <div className="bg-white rounded-sm border border-gray-100 p-3 md:p-4 mb-4">
+              <div className="bg-white rounded-2xl border border-gray-100 p-3 md:p-4 mb-4">
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {results.map((p) => (
                     <ProductCard key={p.id} to="/p/$slug" product={p} rating={ratings.data?.[p.id]} />
@@ -149,7 +149,7 @@ function SearchPage() {
             )}
 
             {!q && !category && readyBoxes && readyBoxes.length > 0 && (
-              <div className="bg-white rounded-sm border border-gray-100 p-3 md:p-4">
+              <div className="bg-white rounded-2xl border border-gray-100 p-3 md:p-4">
                 <h2 className="font-heading text-base font-bold text-gray-900 mb-3">Ready-made Gift Boxes</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {readyBoxes.map((b) => (
@@ -166,7 +166,7 @@ function SearchPage() {
       {mobileFiltersOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-black/40" onClick={() => setMobileFiltersOpen(false)} />
-          <div className="absolute left-0 top-0 bottom-0 w-72 bg-[#f1f3f6] p-3 overflow-y-auto">
+          <div className="absolute left-0 top-0 bottom-0 w-72 bg-cream p-3 overflow-y-auto">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold text-sm">Filters</h2>
               <button onClick={() => setMobileFiltersOpen(false)}><X className="w-5 h-5 text-gray-500" /></button>

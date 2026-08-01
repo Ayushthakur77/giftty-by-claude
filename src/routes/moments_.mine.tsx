@@ -38,7 +38,7 @@ function MyMomentsPage() {
         <Link
           to="/auth/sign-in"
           search={{ redirect: "/moments/mine" } as any}
-          className="inline-block bg-maroon text-white px-6 py-2.5 rounded-sm font-semibold text-sm hover:bg-maroon-dark transition"
+          className="inline-block bg-maroon text-white px-6 py-2.5 rounded-2xl font-semibold text-sm hover:bg-maroon-dark transition"
         >
           Sign in
         </Link>

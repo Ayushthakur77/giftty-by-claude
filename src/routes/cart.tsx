@@ -85,12 +85,12 @@ function CartPage() {
 
   if (lines.length === 0) {
     return (
-      <div className="bg-[#f1f3f6] min-h-screen">
+      <div className="bg-cream min-h-screen">
         <div className="max-w-3xl mx-auto px-4 py-20 text-center">
           <ShoppingBag className="w-14 h-14 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-600 font-medium mb-1">Your cart is empty.</p>
           <p className="text-gray-400 text-sm mb-6">Looks like you haven't added anything to your cart yet.</p>
-          <Link to="/" className="inline-block bg-maroon text-white px-6 py-2.5 rounded-sm font-semibold text-sm hover:bg-maroon-dark transition">
+          <Link to="/" className="inline-block bg-maroon text-white px-6 py-2.5 rounded-2xl font-semibold text-sm hover:bg-maroon-dark transition">
             Continue shopping
           </Link>
         </div>
@@ -99,9 +99,9 @@ function CartPage() {
   }
 
   return (
-    <div className="bg-[#f1f3f6] min-h-screen">
+    <div className="bg-cream min-h-screen">
       <div className="max-w-6xl mx-auto px-3 md:px-5 py-4 grid md:grid-cols-[1fr_340px] gap-4 items-start">
-        <div className="bg-white rounded-sm border border-gray-100 shadow-sm">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
           <div className="px-4 py-3 border-b border-gray-100">
             <h1 className="font-semibold text-gray-900">My Cart ({itemCount})</h1>
           </div>
@@ -174,13 +174,13 @@ function CartPage() {
             })}
           </div>
           <div className="p-4 flex justify-end">
-            <Link to="/checkout" className="bg-gold text-white px-8 py-3 rounded-sm font-semibold text-sm hover:bg-gold-light transition">
+            <Link to="/checkout" className="bg-gold text-white px-8 py-3 rounded-2xl font-semibold text-sm hover:bg-gold-light transition">
               Place Order
             </Link>
           </div>
         </div>
 
-        <div className="bg-white rounded-sm border border-gray-100 shadow-sm p-4 sticky top-20">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sticky top-20">
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide pb-3 border-b border-gray-100">Price Details</h2>
           <div className="py-3 space-y-2.5 border-b border-gray-100 text-sm">
             <div className="flex justify-between text-gray-700">
