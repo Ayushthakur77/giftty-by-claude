@@ -1,12 +1,5 @@
 import { Link } from "@tanstack/react-router";
-
-const OCCASION_LINKS = [
-  { label: "Birthday", query: "birthday" },
-  { label: "Anniversary", query: "anniversary" },
-  { label: "Housewarming", query: "housewarming" },
-  { label: "Congratulations", query: "congratulations" },
-  { label: "Thank You", query: "thank you" },
-];
+import { OCCASIONS } from "@/lib/occasions";
 
 const RECIPIENT_LINKS = [
   { label: "Gifts for Her", query: "her" },
@@ -27,9 +20,9 @@ export function Footer() {
         <div>
           <h3 className="text-xs font-semibold text-gray-400 tracking-wide uppercase mb-3">Shop by Occasion</h3>
           <ul className="space-y-2 text-gray-600">
-            {OCCASION_LINKS.map((o) => (
-              <li key={o.label}>
-                <Link to="/search" search={{ q: o.query } as any} className="hover:text-maroon transition">{o.label}</Link>
+            {OCCASIONS.map((o) => (
+              <li key={o.value}>
+                <Link to="/search" search={{ q: "", occasion: o.value } as any} className="hover:text-maroon transition">{o.label}</Link>
               </li>
             ))}
           </ul>

@@ -10,6 +10,7 @@ import { supabasePublic as supabase } from "./supabase-public-client";
 export async function listProducts(opts: {
   categorySlug?: string;
   search?: string;
+  occasion?: string;
   sort?: "newest" | "price_asc" | "price_desc" | "best_rated";
   limit?: number;
   offset?: number;
@@ -23,6 +24,10 @@ export async function listProducts(opts: {
       .eq("slug", opts.categorySlug)
       .single();
     if (cat) query = query.eq("category_id", cat.id);
+  }
+
+  if (opts.occasion) {
+    query = query.contains("occasion_tags", [opts.occasion]);
   }
 
   if (opts.search) {

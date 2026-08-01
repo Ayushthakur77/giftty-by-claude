@@ -6,9 +6,10 @@ import { Search as SearchIcon, SlidersHorizontal, X } from "lucide-react";
 import { listCategories, listProducts, listReadyBoxes } from "@/lib/public-catalog";
 import { ProductCard, ProductGridSkeleton } from "@/components/ProductCard";
 import { useProductRatings } from "@/lib/ratings";
+import { OCCASIONS } from "@/lib/occasions";
 
 export const Route = createFileRoute("/search")({
-  validateSearch: z.object({ q: z.string().default(""), category: z.string().optional() }),
+  validateSearch: z.object({ q: z.string().default(""), category: z.string().optional(), occasion: z.string().optional() }),
   component: SearchPage,
 });
 
@@ -21,7 +22,7 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
 ];
 
 function SearchPage() {
-  const { q, category } = Route.useSearch();
+  const { q, category, occasion } = Route.useSearch();
   const navigate = useNavigate();
   const [input, setInput] = useState(q);
   const [sort, setSort] = useState<SortKey>("newest");
@@ -33,50 +34,78 @@ function SearchPage() {
   });
 
   const { data: results, isLoading } = useQuery({
-    queryKey: ["search", q, category, sort],
-    queryFn: () => listProducts({ search: q || undefined, categorySlug: category, sort, limit: 60 }),
+    queryKey: ["search", q, category, occasion, sort],
+    queryFn: () => listProducts({ search: q || undefined, categorySlug: category, occasion, sort, limit: 60 }),
   });
 
   const { data: readyBoxes } = useQuery({
     queryKey: ["search-ready-boxes"],
     queryFn: listReadyBoxes,
-    enabled: !q && !category,
+    enabled: !q && !category && !occasion,
   });
 
   const ratings = useProductRatings((results ?? []).map((p) => p.id));
 
   const topLevelCategories = useMemo(() => (categories ?? []).filter((c) => !c.parent_id), [categories]);
   const activeCategory = topLevelCategories.find((c) => c.slug === category);
+  const activeOccasion = OCCASIONS.find((o) => o.value === occasion);
 
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
-    navigate({ to: "/search", search: { q: input.trim(), category } });
+    navigate({ to: "/search", search: { q: input.trim(), category, occasion } });
   }
 
   function selectCategory(slug: string | undefined) {
-    navigate({ to: "/search", search: { q, category: slug } });
+    navigate({ to: "/search", search: { q, category: slug, occasion } });
+    setMobileFiltersOpen(false);
+  }
+
+  function selectOccasion(value: string | undefined) {
+    navigate({ to: "/search", search: { q, category, occasion: value } });
     setMobileFiltersOpen(false);
   }
 
   const FilterPanel = (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-      <h3 className="font-semibold text-sm text-gray-900 mb-3">Category</h3>
-      <div className="space-y-1.5">
-        <button
-          onClick={() => selectCategory(undefined)}
-          className={`block w-full text-left text-sm px-2 py-1.5 rounded transition ${!category ? "bg-maroon/10 text-maroon font-semibold" : "text-gray-600 hover:bg-gray-50"}`}
-        >
-          All categories
-        </button>
-        {topLevelCategories.map((c) => (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-5">
+      <div>
+        <h3 className="font-semibold text-sm text-gray-900 mb-3">Occasion</h3>
+        <div className="space-y-1.5">
           <button
-            key={c.id}
-            onClick={() => selectCategory(c.slug)}
-            className={`block w-full text-left text-sm px-2 py-1.5 rounded transition ${category === c.slug ? "bg-maroon/10 text-maroon font-semibold" : "text-gray-600 hover:bg-gray-50"}`}
+            onClick={() => selectOccasion(undefined)}
+            className={`block w-full text-left text-sm px-2 py-1.5 rounded transition ${!occasion ? "bg-maroon/10 text-maroon font-semibold" : "text-gray-600 hover:bg-gray-50"}`}
           >
-            {c.name}
+            Any occasion
           </button>
-        ))}
+          {OCCASIONS.map((o) => (
+            <button
+              key={o.value}
+              onClick={() => selectOccasion(o.value)}
+              className={`block w-full text-left text-sm px-2 py-1.5 rounded transition ${occasion === o.value ? "bg-maroon/10 text-maroon font-semibold" : "text-gray-600 hover:bg-gray-50"}`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <h3 className="font-semibold text-sm text-gray-900 mb-3">Category</h3>
+        <div className="space-y-1.5">
+          <button
+            onClick={() => selectCategory(undefined)}
+            className={`block w-full text-left text-sm px-2 py-1.5 rounded transition ${!category ? "bg-maroon/10 text-maroon font-semibold" : "text-gray-600 hover:bg-gray-50"}`}
+          >
+            All categories
+          </button>
+          {topLevelCategories.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => selectCategory(c.slug)}
+              className={`block w-full text-left text-sm px-2 py-1.5 rounded transition ${category === c.slug ? "bg-maroon/10 text-maroon font-semibold" : "text-gray-600 hover:bg-gray-50"}`}
+            >
+              {c.name}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -102,7 +131,7 @@ function SearchPage() {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 mb-3 flex items-center justify-between flex-wrap gap-2">
               <div>
                 <h1 className="font-heading text-base font-bold text-gray-900">
-                  {q ? `Results for "${q}"` : activeCategory ? activeCategory.name : "All Products"}
+                  {activeOccasion ? `${activeOccasion.label} Gifts` : q ? `Results for "${q}"` : activeCategory ? activeCategory.name : "All Products"}
                 </h1>
                 {results && <p className="text-gray-400 text-xs mt-0.5">{results.length} products</p>}
               </div>
@@ -133,8 +162,12 @@ function SearchPage() {
             )}
 
             {!isLoading && results?.length === 0 && (
-              <div className="bg-white rounded-2xl border border-gray-100 text-center py-20 text-gray-500 text-sm">
-                {q ? `No products found for "${q}". Try a different search term.` : "No products available yet."}
+              <div className="bg-white rounded-2xl border border-gray-100 text-center py-20 text-gray-500 text-sm px-4">
+                {activeOccasion
+                  ? `No products tagged for ${activeOccasion.label} yet — check back soon, or browse all products.`
+                  : q
+                    ? `No products found for "${q}". Try a different search term.`
+                    : "No products available yet."}
               </div>
             )}
 
@@ -148,7 +181,7 @@ function SearchPage() {
               </div>
             )}
 
-            {!q && !category && readyBoxes && readyBoxes.length > 0 && (
+            {!q && !category && !occasion && readyBoxes && readyBoxes.length > 0 && (
               <div className="bg-white rounded-2xl border border-gray-100 p-3 md:p-4">
                 <h2 className="font-heading text-base font-bold text-gray-900 mb-3">Ready-made Gift Boxes</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">

@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase-client";
 import { Modal } from "@/components/Modal";
 import { ImageUploader } from "@/components/ImageUploader";
 import { Pencil, Trash2, Plus } from "lucide-react";
+import { OCCASIONS } from "@/lib/occasions";
 
 export const Route = createFileRoute("/admin/products")({ component: AdminProductsPage });
 
@@ -26,11 +27,12 @@ type ProductForm = {
   status: "active" | "draft" | "archived";
   is_gift_builder_compatible: boolean;
   images: string[];
+  occasion_tags: string[];
 };
 
 const EMPTY_FORM: ProductForm = {
   name: "", category_id: "", price: "", stock: "10", short_description: "",
-  status: "active", is_gift_builder_compatible: false, images: [],
+  status: "active", is_gift_builder_compatible: false, images: [], occasion_tags: [],
 };
 
 function AdminProductsPage() {
@@ -73,6 +75,7 @@ function AdminProductsPage() {
       status: p.status,
       is_gift_builder_compatible: p.is_gift_builder_compatible,
       images: Array.isArray(p.images) ? p.images : [],
+      occasion_tags: Array.isArray(p.occasion_tags) ? p.occasion_tags : [],
     });
     setError(null);
     setModalOpen(true);
@@ -96,6 +99,7 @@ function AdminProductsPage() {
       status: form.status,
       is_gift_builder_compatible: form.is_gift_builder_compatible,
       images: form.images,
+      occasion_tags: form.occasion_tags,
     };
 
     const result = form.id
@@ -194,6 +198,33 @@ function AdminProductsPage() {
             <input type="checkbox" checked={form.is_gift_builder_compatible} onChange={(e) => setForm({ ...form, is_gift_builder_compatible: e.target.checked })} />
             Allow this product in the Gift Box Builder
           </label>
+
+          <div>
+            <p className="text-sm text-gray-600 mb-1.5">Which occasion(s) is this gift good for?</p>
+            <p className="text-xs text-gray-400 mb-2">Controls the "Shop by Occasion" links on the homepage.</p>
+            <div className="grid grid-cols-2 gap-1.5">
+              {OCCASIONS.map((o) => {
+                const checked = form.occasion_tags.includes(o.value);
+                return (
+                  <label key={o.value} className="flex items-center gap-2 text-sm text-gray-600 border rounded-lg px-2.5 py-1.5">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          occasion_tags: e.target.checked
+                            ? [...form.occasion_tags, o.value]
+                            : form.occasion_tags.filter((v) => v !== o.value),
+                        })
+                      }
+                    />
+                    {o.label}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
 
           {error && <p className="text-red-600 text-sm">{error}</p>}
 
