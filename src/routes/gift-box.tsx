@@ -254,7 +254,7 @@ function GiftBoxBuilderPage() {
               {aiError && <p className="text-red-600 text-xs mt-2">{aiError}</p>}
             </div>
 
-            <textarea value={giftNote} onChange={(e) => setGiftNote(e.target.value)} maxLength={200} rows={3}
+            <textarea value={giftNote} onChange={(e) => setGiftNote(e.target.value)} maxLength={400} rows={4}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="Write a personal message… or use AI above" />
           </div>
           <div className="flex gap-3">

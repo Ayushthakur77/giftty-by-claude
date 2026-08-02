@@ -105,10 +105,15 @@ export const getAiGreetingMessageFn = createServerFn({ method: "POST" })
       short: "very short and sweet, one line only",
     };
 
+    const lengthGuidance =
+      data.tone === "short"
+        ? "Keep it to one short, complete line (roughly 40-100 characters)."
+        : "Write a complete, well-formed note of about 3-5 sentences (roughly 150-350 characters).";
+
     const prompt = `Write a gift note/greeting card message for an Indian gifting store called Giftty.
 Context from the customer: "${data.context}"
 Desired tone: ${toneDescriptions[data.tone]}.
-Keep it under 200 characters. Return ONLY the message text, no quotes, no explanation.`;
+${lengthGuidance} It should genuinely reflect the context given. Do not cut off mid-sentence — always finish the thought. Return ONLY the message text, no quotes, no explanation, no markdown.`;
 
     try {
       const response = await fetchGeminiWithRetry(
@@ -118,7 +123,7 @@ Keep it under 200 characters. Return ONLY the message text, no quotes, no explan
           headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.7, maxOutputTokens: 100 },
+            generationConfig: { temperature: 0.7, maxOutputTokens: 500 },
           }),
         }
       );
@@ -129,7 +134,7 @@ Keep it under 200 characters. Return ONLY the message text, no quotes, no explan
 
       await supabaseAdmin.from("ai_logs").insert({ user_id: data.userId ?? null, feature: "greeting_card", input_summary: data.context.slice(0, 200), success: true });
 
-      return { ok: true as const, message: text.replace(/^["']|["']$/g, "").slice(0, 200) };
+      return { ok: true as const, message: text.replace(/^["']|["']$/g, "").slice(0, 400) };
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
       await supabaseAdmin.from("ai_logs").insert({
