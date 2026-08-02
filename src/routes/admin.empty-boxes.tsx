@@ -179,6 +179,11 @@ function AdminEmptyBoxesPage() {
             <input placeholder="Max weight (g)" type="number" value={form.max_weight_grams} onChange={(e) => setForm({ ...form, max_weight_grams: e.target.value })} className="border rounded-lg px-3 py-2 text-sm" />
             <input placeholder="Base price (₹)" type="number" value={form.base_price} onChange={(e) => setForm({ ...form, base_price: e.target.value })} className="border rounded-lg px-3 py-2 text-sm" />
           </div>
+          {parseInt(form.max_weight_grams, 10) > 0 && parseInt(form.max_weight_grams, 10) < 200 && (
+            <p className="text-xs text-amber-600 -mt-2">
+              ⚠️ {form.max_weight_grams}g is very low — most single products already weigh 70–150g, so almost nothing will fit. Did you mean {form.max_weight_grams}00g?
+            </p>
+          )}
           <input placeholder="Stock" type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
 
           <div>

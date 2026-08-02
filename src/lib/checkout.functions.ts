@@ -42,6 +42,37 @@ export const cartLineSchema = z.union([
   }),
 ]);
 
+const cartPreviewInput = z.object({
+  lines: z.array(cartLineSchema).min(1).max(50),
+});
+
+/**
+ * Prices just the cart's line items (no address, no coupon, no shipping/tax)
+ * — used on the Cart page, before the customer has necessarily picked a
+ * delivery address yet. Uses the same pricing engine as checkout, so a
+ * custom gift box (or anything else) shows its real price and any
+ * unavailability/limit errors here instead of a placeholder "priced at
+ * checkout" that silently hid problems until the customer reached checkout.
+ */
+export const previewCartItemsFn = createServerFn({ method: "POST" })
+  .validator((d: unknown) => cartPreviewInput.parse(d))
+  .handler(async ({ data }) => {
+    const lines = data.lines as CartLine[];
+    const snap = await loadCatalogSnapshot(lines);
+    const priced = priceCart(lines, snap);
+    return {
+      lines: priced.lines.map((l) => ({
+        description: l.descriptionSnapshot,
+        quantity: l.quantity,
+        unitPricePaise: l.unitPricePaise,
+        linePaise: l.linePaise,
+        error: l.error ?? null,
+      })),
+      subtotalPaise: priced.subtotalPaise,
+      hasErrors: priced.hasErrors,
+    };
+  });
+
 const previewInput = z.object({
   userId: z.string().uuid(),
   addressId: z.string().uuid(),

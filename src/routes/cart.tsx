@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCartStore } from "@/lib/cart-store";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
-import { Trash2, ShieldCheck, Minus, Plus, ShoppingBag } from "lucide-react";
+import { previewCartItemsFn } from "@/lib/checkout.functions";
+import { Trash2, ShieldCheck, Minus, Plus, ShoppingBag, AlertTriangle } from "lucide-react";
 import type { CartLineProduct, CartLineReadyBox } from "@/lib/pricing";
 
 export const Route = createFileRoute("/cart")({ component: CartPage });
@@ -63,25 +64,34 @@ function CartPage() {
     enabled: readyBoxIds.length > 0,
   });
 
+  // Authoritative per-line pricing — same pricing engine as checkout, so
+  // custom gift boxes (and anything else) show a real price here instead of
+  // a "priced at checkout" placeholder, and any line-level problem (out of
+  // stock, box weight/capacity exceeded, etc) surfaces here too instead of
+  // only appearing after the customer reaches the checkout page.
+  const { data: priced, isFetching: pricingLoading } = useQuery({
+    queryKey: ["cart-preview", lines],
+    queryFn: () => previewCartItemsFn({ data: { lines } }),
+    enabled: lines.length > 0,
+  });
+
   const itemCount = lines.reduce((sum, l) => sum + ("quantity" in l ? l.quantity : 1), 0);
 
   let displayMrpTotal = 0;
-  const displaySubtotal =
-    lines.reduce((sum, line) => {
-      if (line.type === "product") {
-        const p = products?.find((pr) => pr.id === line.productId);
-        if (p) displayMrpTotal += (p.compare_at_price_paise ?? p.price_paise) * line.quantity;
-        return sum + (p ? p.price_paise * line.quantity : 0);
-      }
-      if (line.type === "ready_box") {
-        const b = readyBoxes?.find((bx) => bx.id === line.readyBoxId);
-        if (b) displayMrpTotal += (b.compare_at_price_paise ?? b.price_paise) * line.quantity;
-        return sum + (b ? b.price_paise * line.quantity : 0);
-      }
-      return sum;
-    }, 0) ?? 0;
+  lines.forEach((line) => {
+    if (line.type === "product") {
+      const p = products?.find((pr) => pr.id === line.productId);
+      if (p) displayMrpTotal += (p.compare_at_price_paise ?? p.price_paise) * line.quantity;
+    }
+    if (line.type === "ready_box") {
+      const b = readyBoxes?.find((bx) => bx.id === line.readyBoxId);
+      if (b) displayMrpTotal += (b.compare_at_price_paise ?? b.price_paise) * line.quantity;
+    }
+  });
 
+  const displaySubtotal = priced?.subtotalPaise ?? 0;
   const savings = Math.max(0, displayMrpTotal - displaySubtotal);
+  const hasErrors = priced?.hasErrors ?? false;
 
   if (lines.length === 0) {
     return (
@@ -105,11 +115,20 @@ function CartPage() {
           <div className="px-4 py-3 border-b border-gray-100">
             <h1 className="font-semibold text-gray-900">My Cart ({itemCount})</h1>
           </div>
+          {hasErrors && (
+            <div className="mx-4 mt-3 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+              <p className="text-red-600 text-xs">
+                Some items in your cart need attention before you can check out — see the notes below.
+              </p>
+            </div>
+          )}
           <div className="divide-y divide-gray-100">
             {lines.map((line, i) => {
               if (line.type === "product") {
                 const p = products?.find((pr) => pr.id === line.productId);
                 const hasDiscount = p?.compare_at_price_paise && p.compare_at_price_paise > p.price_paise;
+                const lineError = priced?.lines[i]?.error;
                 return (
                   <div key={i} className="flex gap-4 p-4">
                     <div className="w-24 h-24 bg-gray-50 rounded overflow-hidden shrink-0">
@@ -128,6 +147,11 @@ function CartPage() {
                           <span className="text-xs text-gray-400 line-through">{formatINR(p!.compare_at_price_paise!)}</span>
                         )}
                       </div>
+                      {lineError && (
+                        <p className="flex items-center gap-1 text-xs text-red-500 mt-1.5">
+                          <AlertTriangle className="w-3 h-3 shrink-0" /> {lineError}
+                        </p>
+                      )}
                       <div className="flex items-center gap-4 mt-3">
                         <QtyStepper value={line.quantity} onChange={(n) => updateQuantity(i, n)} />
                         <button onClick={() => removeLine(i)} className="flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-red-500 transition">
@@ -140,6 +164,7 @@ function CartPage() {
               }
               if (line.type === "ready_box") {
                 const b = readyBoxes?.find((bx) => bx.id === line.readyBoxId);
+                const lineError = priced?.lines[i]?.error;
                 return (
                   <div key={i} className="flex gap-4 p-4">
                     <div className="w-24 h-24 bg-gray-50 rounded overflow-hidden shrink-0">
@@ -150,6 +175,11 @@ function CartPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-gray-800 line-clamp-2">{b?.name ?? "Loading…"} <span className="text-gray-400">(Gift Box)</span></p>
                       <p className="font-semibold text-gray-900 mt-2">{b ? formatINR(b.price_paise) : ""}</p>
+                      {lineError && (
+                        <p className="flex items-center gap-1 text-xs text-red-500 mt-1.5">
+                          <AlertTriangle className="w-3 h-3 shrink-0" /> {lineError}
+                        </p>
+                      )}
                       <div className="flex items-center gap-4 mt-3">
                         <QtyStepper value={line.quantity} onChange={(n) => updateQuantity(i, n)} />
                         <button onClick={() => removeLine(i)} className="flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-red-500 transition">
@@ -160,23 +190,41 @@ function CartPage() {
                   </div>
                 );
               }
-              return (
-                <div key={i} className="flex gap-4 p-4">
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-800">Custom Gift Box</p>
-                    <p className="text-xs text-gray-400 mt-1">Priced at checkout</p>
+              {
+                const lineResult = priced?.lines[i];
+                const lineError = lineResult?.error;
+                return (
+                  <div key={i} className="flex gap-4 p-4">
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-800">{lineResult?.description ?? "Custom Gift Box"}</p>
+                      {lineError ? (
+                        <p className="flex items-center gap-1 text-xs text-red-500 mt-1">
+                          <AlertTriangle className="w-3 h-3 shrink-0" /> {lineError}
+                        </p>
+                      ) : (
+                        <p className="font-semibold text-gray-900 mt-1">
+                          {pricingLoading ? "Calculating…" : lineResult ? formatINR(lineResult.linePaise) : ""}
+                        </p>
+                      )}
+                    </div>
+                    <button onClick={() => removeLine(i)} className="flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-red-500 transition h-fit">
+                      <Trash2 className="w-3.5 h-3.5" /> Remove
+                    </button>
                   </div>
-                  <button onClick={() => removeLine(i)} className="flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-red-500 transition h-fit">
-                    <Trash2 className="w-3.5 h-3.5" /> Remove
-                  </button>
-                </div>
-              );
+                );
+              }
             })}
           </div>
           <div className="p-4 flex justify-end">
-            <Link to="/checkout" className="bg-gold text-white px-8 py-3 rounded-2xl font-semibold text-sm hover:bg-gold-light transition">
-              Place Order
-            </Link>
+            {hasErrors ? (
+              <span className="bg-gray-200 text-gray-400 px-8 py-3 rounded-2xl font-semibold text-sm cursor-not-allowed">
+                Fix items to continue
+              </span>
+            ) : (
+              <Link to="/checkout" className="bg-gold text-white px-8 py-3 rounded-2xl font-semibold text-sm hover:bg-gold-light transition">
+                Place Order
+              </Link>
+            )}
           </div>
         </div>
 
