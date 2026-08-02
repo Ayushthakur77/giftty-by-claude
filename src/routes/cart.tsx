@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { previewCartItemsFn } from "@/lib/checkout.functions";
 import { Trash2, ShieldCheck, Minus, Plus, ShoppingBag, AlertTriangle } from "lucide-react";
-import type { CartLineProduct, CartLineReadyBox } from "@/lib/pricing";
+import type { CartLineProduct, CartLineReadyBox, CartLineCustomBox } from "@/lib/pricing";
 
 export const Route = createFileRoute("/cart")({ component: CartPage });
 
@@ -43,6 +43,9 @@ function CartPage() {
 
   const productIds = lines.filter((l): l is CartLineProduct => l.type === "product").map((l) => l.productId);
   const readyBoxIds = lines.filter((l): l is CartLineReadyBox => l.type === "ready_box").map((l) => l.readyBoxId);
+  const customBoxLines = lines.filter((l): l is CartLineCustomBox => l.type === "custom_box");
+  const emptyBoxIds = customBoxLines.map((l) => l.emptyBoxId);
+  const customBoxProductIds = [...new Set(customBoxLines.flatMap((l) => l.productIds))];
 
   const { data: products } = useQuery({
     queryKey: ["cart-products", productIds],
@@ -62,6 +65,26 @@ function CartPage() {
       return data ?? [];
     },
     enabled: readyBoxIds.length > 0,
+  });
+
+  const { data: emptyBoxes } = useQuery({
+    queryKey: ["cart-empty-boxes", emptyBoxIds],
+    queryFn: async () => {
+      if (emptyBoxIds.length === 0) return [];
+      const { data } = await supabase.from("empty_gift_boxes").select("id, name, images").in("id", emptyBoxIds);
+      return data ?? [];
+    },
+    enabled: emptyBoxIds.length > 0,
+  });
+
+  const { data: customBoxProducts } = useQuery({
+    queryKey: ["cart-custom-box-products", customBoxProductIds],
+    queryFn: async () => {
+      if (customBoxProductIds.length === 0) return [];
+      const { data } = await supabase.from("products").select("id, name, images").in("id", customBoxProductIds);
+      return data ?? [];
+    },
+    enabled: customBoxProductIds.length > 0,
   });
 
   // Authoritative per-line pricing — same pricing engine as checkout, so
@@ -193,23 +216,49 @@ function CartPage() {
               {
                 const lineResult = priced?.lines[i];
                 const lineError = lineResult?.error;
+                const box = emptyBoxes?.find((eb) => eb.id === line.emptyBoxId);
+                const boxImg = Array.isArray(box?.images) && box.images[0] ? (box.images[0] as string) : null;
+                const contentImgs = line.productIds
+                  .map((pid) => customBoxProducts?.find((cp) => cp.id === pid))
+                  .filter((cp): cp is NonNullable<typeof cp> => !!cp);
                 return (
                   <div key={i} className="flex gap-4 p-4">
-                    <div className="flex-1">
+                    <div className="shrink-0 flex flex-col items-center gap-1">
+                      <div className="w-24 h-24 bg-gray-50 rounded overflow-hidden">
+                        {boxImg && <img src={boxImg} alt="" className="w-full h-full object-cover" />}
+                      </div>
+                      {contentImgs.length > 0 && (
+                        <div className="flex gap-1">
+                          {contentImgs.slice(0, 3).map((cp, ci) => {
+                            const img = Array.isArray(cp.images) && cp.images[0] ? (cp.images[0] as string) : null;
+                            return (
+                              <div key={ci} className="w-6 h-6 rounded overflow-hidden bg-gray-50 ring-1 ring-white">
+                                {img && <img src={img} alt="" className="w-full h-full object-cover" />}
+                              </div>
+                            );
+                          })}
+                          {contentImgs.length > 3 && (
+                            <span className="text-[9px] text-gray-400 self-center">+{contentImgs.length - 3}</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
                       <p className="text-sm text-gray-800">{lineResult?.description ?? "Custom Gift Box"}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{line.productIds.length} item{line.productIds.length !== 1 ? "s" : ""} inside</p>
                       {lineError ? (
-                        <p className="flex items-center gap-1 text-xs text-red-500 mt-1">
+                        <p className="flex items-center gap-1 text-xs text-red-500 mt-1.5">
                           <AlertTriangle className="w-3 h-3 shrink-0" /> {lineError}
                         </p>
                       ) : (
-                        <p className="font-semibold text-gray-900 mt-1">
+                        <p className="font-semibold text-gray-900 mt-1.5">
                           {pricingLoading ? "Calculating…" : lineResult ? formatINR(lineResult.linePaise) : ""}
                         </p>
                       )}
+                      <button onClick={() => removeLine(i)} className="flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-red-500 transition mt-3">
+                        <Trash2 className="w-3.5 h-3.5" /> Remove
+                      </button>
                     </div>
-                    <button onClick={() => removeLine(i)} className="flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-red-500 transition h-fit">
-                      <Trash2 className="w-3.5 h-3.5" /> Remove
-                    </button>
                   </div>
                 );
               }

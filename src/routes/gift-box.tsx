@@ -267,12 +267,84 @@ function GiftBoxBuilderPage() {
       {step === "summary" && selectedBox && (
         <div>
           <h2 className="font-medium text-gray-900 mb-4">Summary</h2>
-          <div className="border border-gray-100 rounded-xl p-4 space-y-2 text-sm">
-            <p><span className="text-gray-500">Box:</span> {selectedBox.name} — {formatINR(selectedBox.base_price_paise)}</p>
-            <p><span className="text-gray-500">Products:</span> {selectedProductIds.length} items</p>
-            {ribbonId && <p><span className="text-gray-500">Ribbon:</span> {extras?.ribbons.find((r) => r.id === ribbonId)?.name}</p>}
-            {fillerId && <p><span className="text-gray-500">Filler:</span> {extras?.fillers.find((f) => f.id === fillerId)?.name}</p>}
-            {cardId && <p><span className="text-gray-500">Card:</span> {extras?.greetingCards.find((c) => c.id === cardId)?.name}</p>}
+          <div className="border border-gray-100 rounded-xl p-4 space-y-4 text-sm">
+            <div className="flex gap-3">
+              <div className="w-16 h-16 rounded-lg bg-gray-50 overflow-hidden shrink-0">
+                {Array.isArray(selectedBox.images) && selectedBox.images[0] ? (
+                  <img src={selectedBox.images[0] as string} alt="" className="w-full h-full object-cover" />
+                ) : null}
+              </div>
+              <div>
+                <p className="text-gray-500 text-xs">Box</p>
+                <p className="text-gray-900">{selectedBox.name} — {formatINR(selectedBox.base_price_paise)}</p>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-gray-500 text-xs mb-1.5">Products ({selectedProductIds.length})</p>
+              <div className="flex flex-wrap gap-2">
+                {selectedProductIds.map((id) => {
+                  const p = eligibleProducts?.find((pr) => pr.id === id);
+                  const img = Array.isArray(p?.images) && p.images[0] ? (p.images[0] as string) : null;
+                  return (
+                    <div key={id} className="flex items-center gap-2 border border-gray-100 rounded-lg pr-2.5 py-1 pl-1">
+                      <div className="w-10 h-10 rounded-md bg-gray-50 overflow-hidden shrink-0">
+                        {img && <img src={img} alt="" className="w-full h-full object-cover" />}
+                      </div>
+                      <span className="text-xs text-gray-700 max-w-[140px] truncate">{p?.name ?? "…"}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {(ribbonId || fillerId || cardId) && (
+              <div className="flex flex-wrap gap-4">
+                {ribbonId && (() => {
+                  const r = extras?.ribbons.find((x) => x.id === ribbonId);
+                  return (
+                    <div className="flex items-center gap-2">
+                      <div className="w-10 h-10 rounded-md bg-gray-50 overflow-hidden shrink-0">
+                        {r?.image_url && <img src={r.image_url as string} alt="" className="w-full h-full object-cover" />}
+                      </div>
+                      <div>
+                        <p className="text-gray-500 text-xs">Ribbon</p>
+                        <p className="text-gray-800 text-xs">{r?.name}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+                {fillerId && (() => {
+                  const f = extras?.fillers.find((x) => x.id === fillerId);
+                  return (
+                    <div className="flex items-center gap-2">
+                      <div className="w-10 h-10 rounded-md bg-gray-50 overflow-hidden shrink-0">
+                        {f?.image_url && <img src={f.image_url as string} alt="" className="w-full h-full object-cover" />}
+                      </div>
+                      <div>
+                        <p className="text-gray-500 text-xs">Filler</p>
+                        <p className="text-gray-800 text-xs">{f?.name}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+                {cardId && (() => {
+                  const c = extras?.greetingCards.find((x) => x.id === cardId);
+                  return (
+                    <div className="flex items-center gap-2">
+                      <div className="w-10 h-10 rounded-md bg-gray-50 overflow-hidden shrink-0">
+                        {c?.image_url && <img src={c.image_url as string} alt="" className="w-full h-full object-cover" />}
+                      </div>
+                      <div>
+                        <p className="text-gray-500 text-xs">Card</p>
+                        <p className="text-gray-800 text-xs">{c?.name}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
             {giftNote && <p><span className="text-gray-500">Note:</span> "{giftNote}"</p>}
             <p className="text-lg font-semibold text-maroon pt-2 border-t border-gray-100">
               Estimated total: {formatINR(runningTotal)}
